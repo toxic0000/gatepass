@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Community {
+  id        String     @id @default(cuid())
+  name      String
+  slug      String     @unique
+  residents Resident[]
+  createdAt DateTime   @default(now())
+}
+
+model Resident {
+  id          String      @id @default(cuid())
+  name        String
+  unit        String
+  token       String      @unique @default(cuid())
+  communityId String
+  community   Community   @relation(fields: [communityId], references: [id])
+  guestPasses GuestPass[]
+  createdAt   DateTime    @default(now())
+  // future auth fields:
+  // email        String?  @unique
+  // passwordHash String?
+}
+
+model GuestPass {
+  id           String    @id @default(cuid())
+  shortCode    String    @unique
+  residentId   String
+  resident     Resident  @relation(fields: [residentId], references: [id])
+  entryType    String    @default("car")
+  guestName    String
+  totalPersons Int       @default(1)
+  vehiclePlate String?
+  carBrand     String?
+  carModel     String?
+  carColor     String?
+  guestNames   String?
+  validFrom    DateTime
+  validTo      DateTime
+  entries      Entry[]
+  createdAt    DateTime  @default(now())
+}
+
+model Entry {
+  id          String    @id @default(cuid())
+  guestPassId String
+  guestPass   GuestPass @relation(fields: [guestPassId], references: [id])
+  enteredAt   DateTime  @default(now())
+  note        String?
+}

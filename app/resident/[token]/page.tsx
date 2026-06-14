@@ -1,0 +1,393 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { useParams } from "next/navigation";
+import { generateQRDataURL } from "@/lib/qr";
+
+type Entry = { id: string; enteredAt: string; note: string | null };
+type GuestPass = {
+  id: string;
+  shortCode: string;
+  entryType: string;
+  guestName: string;
+  totalPersons: number;
+  vehiclePlate: string | null;
+  carBrand: string | null;
+  carModel: string | null;
+  carColor: string | null;
+  guestNames: string | null;
+  validFrom: string;
+  validTo: string;
+  createdAt: string;
+  entries: Entry[];
+};
+type Resident = {
+  id: string;
+  name: string;
+  unit: string;
+  community: { name: string };
+  guestPasses: GuestPass[];
+};
+
+const EMPTY_CAR_FORM = {
+  entryType: "car" as const,
+  guestName: "",
+  totalPersons: "1",
+  vehiclePlate: "",
+  carBrand: "",
+  carModel: "",
+  carColor: "",
+};
+
+const EMPTY_FOOT_FORM = {
+  entryType: "foot" as const,
+  totalPersons: "1",
+};
+
+export default function ResidentPage() {
+  const { token } = useParams<{ token: string }>();
+  const [resident, setResident] = useState<Resident | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [entryType, setEntryType] = useState<"car" | "foot">("car");
+  const [carForm, setCarForm] = useState(EMPTY_CAR_FORM);
+  const [footForm, setFootForm] = useState(EMPTY_FOOT_FORM);
+  const [footNames, setFootNames] = useState<string[]>([""]);
+  const [submitting, setSubmitting] = useState(false);
+  const [qrMap, setQrMap] = useState<Record<string, string>>({});
+  const [selectedPass, setSelectedPass] = useState<string | null>(null);
+
+  const loadResident = useCallback(async () => {
+    const res = await fetch(`/api/residents/${token}`);
+    if (!res.ok) { setError("Link not found."); return; }
+    const data: Resident = await res.json();
+    setResident(data);
+
+    const map: Record<string, string> = {};
+    for (const pass of data.guestPasses) {
+      map[pass.id] = await generateQRDataURL(pass.id, window.location.origin);
+    }
+    setQrMap(map);
+  }, [token]);
+
+  useEffect(() => { loadResident(); }, [loadResident]);
+
+  function handleTotalPersonsChange(val: string) {
+    const n = Math.max(1, parseInt(val) || 1);
+    setFootForm(f => ({ ...f, totalPersons: String(n) }));
+    setFootNames(prev => {
+      const names = [...prev];
+      while (names.length < n) names.push("");
+      return names.slice(0, n);
+    });
+  }
+
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSubmitting(true);
+
+    const body =
+      entryType === "car"
+        ? {
+            residentToken: token,
+            entryType: "car",
+            guestName: carForm.guestName,
+            totalPersons: carForm.totalPersons,
+            vehiclePlate: carForm.vehiclePlate,
+            carBrand: carForm.carBrand,
+            carModel: carForm.carModel,
+            carColor: carForm.carColor,
+          }
+        : {
+            residentToken: token,
+            entryType: "foot",
+            guestName: footNames[0] || "Guest",
+            totalPersons: footForm.totalPersons,
+            guestNames: footNames,
+          };
+
+    const res = await fetch("/api/passes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    setSubmitting(false);
+    if (!res.ok) { alert("Error creating pass"); return; }
+
+    setCarForm(EMPTY_CAR_FORM);
+    setFootForm(EMPTY_FOOT_FORM);
+    setFootNames([""]);
+    await loadResident();
+  }
+
+  function sharePass(passId: string) {
+    const url = `${window.location.origin}/api/passes/${passId}`;
+    if (navigator.share) {
+      navigator.share({ title: "Guest Pass", url });
+    } else {
+      navigator.clipboard.writeText(url);
+      alert("Pass link copied to clipboard!");
+    }
+  }
+
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <p className="text-red-500 text-lg">{error}</p>
+    </div>
+  );
+
+  if (!resident) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <p className="text-slate-400">Loading…</p>
+    </div>
+  );
+
+  const now = new Date();
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-slate-800 text-white px-6 py-4">
+        <p className="text-xs text-slate-400 uppercase tracking-widest">{resident.community.name}</p>
+        <h1 className="text-xl font-semibold">Unit {resident.unit} — {resident.name}</h1>
+      </header>
+
+      <main className="max-w-2xl mx-auto p-6 space-y-8">
+
+        {/* Create pass form */}
+        <section className="bg-white rounded-2xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">Create Guest Pass</h2>
+
+          {/* Entry type toggle */}
+          <div className="flex gap-2 mb-6">
+            <button
+              type="button"
+              onClick={() => setEntryType("car")}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors border ${
+                entryType === "car"
+                  ? "bg-slate-800 text-white border-slate-800"
+                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+              }`}
+            >
+              By Car
+            </button>
+            <button
+              type="button"
+              onClick={() => setEntryType("foot")}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors border ${
+                entryType === "foot"
+                  ? "bg-slate-800 text-white border-slate-800"
+                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+              }`}
+            >
+              On Foot
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {entryType === "car" ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Main guest name *</label>
+                  <input
+                    required
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    value={carForm.guestName}
+                    onChange={e => setCarForm(f => ({ ...f, guestName: e.target.value }))}
+                    placeholder="John Smith"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-600 mb-1">Car brand *</label>
+                    <input
+                      required
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                      value={carForm.carBrand}
+                      onChange={e => setCarForm(f => ({ ...f, carBrand: e.target.value }))}
+                      placeholder="Toyota"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-600 mb-1">Car model *</label>
+                    <input
+                      required
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                      value={carForm.carModel}
+                      onChange={e => setCarForm(f => ({ ...f, carModel: e.target.value }))}
+                      placeholder="Corolla"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-600 mb-1">Car color *</label>
+                    <input
+                      required
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                      value={carForm.carColor}
+                      onChange={e => setCarForm(f => ({ ...f, carColor: e.target.value }))}
+                      placeholder="Silver"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-600 mb-1">Vehicle plate</label>
+                    <input
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                      value={carForm.vehiclePlate}
+                      onChange={e => setCarForm(f => ({ ...f, vehiclePlate: e.target.value }))}
+                      placeholder="ABC-1234"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Total persons *</label>
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    value={carForm.totalPersons}
+                    onChange={e => setCarForm(f => ({ ...f, totalPersons: e.target.value }))}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Total persons *</label>
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    value={footForm.totalPersons}
+                    onChange={e => handleTotalPersonsChange(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-slate-600">Guest names *</label>
+                  {footNames.map((name, i) => (
+                    <input
+                      key={i}
+                      required
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                      value={name}
+                      onChange={e => {
+                        const updated = [...footNames];
+                        updated[i] = e.target.value;
+                        setFootNames(updated);
+                      }}
+                      placeholder={i === 0 ? "Guest 1 (main)" : `Guest ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full bg-slate-800 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-slate-700 disabled:opacity-50 transition-colors"
+            >
+              {submitting ? "Creating…" : "Generate Pass"}
+            </button>
+          </form>
+        </section>
+
+        {/* Existing passes */}
+        {resident.guestPasses.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="text-lg font-semibold text-slate-800">Your Passes</h2>
+            {resident.guestPasses.map(pass => {
+              const active = new Date(pass.validFrom) <= now && now <= new Date(pass.validTo);
+              const expired = now > new Date(pass.validTo);
+              const parsedNames: string[] | null = pass.guestNames ? JSON.parse(pass.guestNames) : null;
+
+              return (
+                <div key={pass.id} className="bg-white rounded-2xl shadow-sm p-5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-slate-800">{pass.guestName}</p>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium uppercase tracking-wide">
+                          {pass.entryType === "car" ? "By car" : "On foot"}
+                        </span>
+                      </div>
+
+                      {pass.entryType === "car" && (
+                        <p className="text-sm text-slate-500 mt-0.5">
+                          {[pass.carColor, pass.carBrand, pass.carModel].filter(Boolean).join(" ")}
+                          {pass.vehiclePlate && ` · ${pass.vehiclePlate}`}
+                        </p>
+                      )}
+
+                      {pass.entryType === "foot" && parsedNames && parsedNames.length > 1 && (
+                        <p className="text-sm text-slate-500 mt-0.5">
+                          {parsedNames.join(", ")}
+                        </p>
+                      )}
+
+                      <p className="text-xs text-slate-400 mt-1">
+                        {pass.totalPersons} person{pass.totalPersons !== 1 ? "s" : ""} ·{" "}
+                        {new Date(pass.validFrom).toLocaleString()} → {new Date(pass.validTo).toLocaleString()}
+                      </p>
+
+                      {pass.entries.length > 0 && (
+                        <p className="text-xs text-emerald-600 mt-1">
+                          Entered {pass.entries.length}x — last: {new Date(pass.entries[0].enteredAt).toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+
+                    <span className={`shrink-0 text-xs font-medium px-2 py-1 rounded-full ${
+                      active ? "bg-emerald-100 text-emerald-700" :
+                      expired ? "bg-slate-100 text-slate-400" :
+                      "bg-amber-100 text-amber-700"
+                    }`}>
+                      {active ? "Active" : expired ? "Expired" : "Upcoming"}
+                    </span>
+                  </div>
+
+                  {/* Short code */}
+                  <div className="mt-3 inline-flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
+                    <span className="text-xs text-slate-400 uppercase tracking-wide">Code</span>
+                    <span className="font-mono font-bold text-slate-800 tracking-widest text-base">{pass.shortCode}</span>
+                  </div>
+
+                  <div className="mt-3 flex gap-3">
+                    <button
+                      onClick={() => setSelectedPass(selectedPass === pass.id ? null : pass.id)}
+                      className="text-sm text-slate-600 underline"
+                    >
+                      {selectedPass === pass.id ? "Hide QR" : "Show QR"}
+                    </button>
+                    <button
+                      onClick={() => sharePass(pass.id)}
+                      className="text-sm text-slate-600 underline"
+                    >
+                      Share link
+                    </button>
+                  </div>
+
+                  {selectedPass === pass.id && qrMap[pass.id] && (
+                    <div className="mt-4 flex flex-col items-center gap-2">
+                      <img src={qrMap[pass.id]} alt="QR Code" className="rounded-lg" />
+                      <p className="text-xs text-slate-400">
+                        Can't scan? Give the guard code{" "}
+                        <span className="font-mono font-bold text-slate-700 tracking-widest">{pass.shortCode}</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </section>
+        )}
+      </main>
+    </div>
+  );
+}
