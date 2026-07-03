@@ -8,32 +8,41 @@ datasource db {
 }
 
 model Community {
-  id        String     @id @default(cuid())
+  id        String           @id @default(cuid())
   name      String
-  slug      String     @unique
+  slug      String           @unique
   residents Resident[]
-  createdAt DateTime   @default(now())
+  admins    CommunityAdmin[]
+  createdAt DateTime         @default(now())
+}
+
+model CommunityAdmin {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String
+  communityId  String
+  community    Community @relation(fields: [communityId], references: [id])
+  createdAt    DateTime  @default(now())
 }
 
 model Resident {
-  id          String      @id @default(cuid())
-  name        String
-  unit        String
-  token       String      @unique @default(cuid())
-  communityId String
-  community   Community   @relation(fields: [communityId], references: [id])
-  guestPasses GuestPass[]
-  createdAt   DateTime    @default(now())
-  // future auth fields:
-  // email        String?  @unique
-  // passwordHash String?
+  id           String      @id @default(cuid())
+  name         String
+  unit         String
+  email        String?     @unique
+  passwordHash String?
+  token        String      @unique @default(cuid())
+  communityId  String
+  community    Community   @relation(fields: [communityId], references: [id])
+  guestPasses  GuestPass[]
+  createdAt    DateTime    @default(now())
 }
 
 model GuestPass {
   id           String    @id @default(cuid())
   shortCode    String    @unique
   residentId   String
-  resident     Resident  @relation(fields: [residentId], references: [id])
+  resident     Resident  @relation(fields: [residentId], references: [id], onDelete: Cascade)
   entryType    String    @default("car")
   guestName    String
   totalPersons Int       @default(1)
@@ -51,7 +60,7 @@ model GuestPass {
 model Entry {
   id          String    @id @default(cuid())
   guestPassId String
-  guestPass   GuestPass @relation(fields: [guestPassId], references: [id])
+  guestPass   GuestPass @relation(fields: [guestPassId], references: [id], onDelete: Cascade)
   enteredAt   DateTime  @default(now())
   note        String?
 }

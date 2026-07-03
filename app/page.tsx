@@ -25,6 +25,14 @@ export default function Home() {
           Resident Demo
         </Link>
       </div>
+      <div className="mt-4 w-full max-w-sm">
+        <Link
+          href="/admin"
+          className="block w-full bg-violet-700 hover:bg-violet-600 text-white rounded-xl py-4 font-medium transition-colors"
+        >
+          Admin Portal
+        </Link>
+      </div>
       <p className="text-slate-600 text-xs mt-6">
         Residents access their portal via a unique link shared by the admin.
       </p>
