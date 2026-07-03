@@ -22,5 +22,30 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  if (!resident.community.isActive) {
+    return NextResponse.json(
+      {
+        error: "This community is currently disabled.",
+        reason: "community_disabled",
+        communityName: resident.community.name,
+      },
+      { status: 403 }
+    );
+  }
+
+  if (!resident.isActive) {
+    return NextResponse.json(
+      {
+        error: "Your access has been disabled by your community admin.",
+        reason: "resident_disabled",
+        disabledNote: resident.disabledNote,
+        residentName: resident.name,
+        unit: resident.unit,
+        communityName: resident.community.name,
+      },
+      { status: 403 }
+    );
+  }
+
   return NextResponse.json(resident);
 }

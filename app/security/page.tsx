@@ -64,8 +64,12 @@ export default function SecurityPage() {
 
   const loadRecentEntries = useCallback(async () => {
     const res = await fetch("/api/security/entries");
+    if (res.status === 401) {
+      router.push("/security/login");
+      return;
+    }
     if (res.ok) setRecentEntries(await res.json());
-  }, []);
+  }, [router]);
 
   useEffect(() => { loadRecentEntries(); }, [loadRecentEntries]);
   useEffect(() => () => { controlsRef.current?.stop(); }, []);
@@ -167,10 +171,19 @@ export default function SecurityPage() {
         <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shrink-0">
           <span className="text-white text-sm font-bold">G</span>
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-lg font-semibold">Security Portal</h1>
           <p className="text-xs text-slate-400">Gate access verification</p>
         </div>
+        <button
+          onClick={async () => {
+            await fetch("/api/auth/logout", { method: "POST" });
+            router.push("/security/login");
+          }}
+          className="text-slate-400 hover:text-white text-sm transition-colors"
+        >
+          Log out
+        </button>
       </header>
 
       <main className="max-w-md mx-auto p-5 space-y-5">

@@ -3,34 +3,44 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model Community {
-  id        String           @id @default(cuid())
-  name      String
-  slug      String           @unique
-  residents Resident[]
-  admins    CommunityAdmin[]
-  createdAt DateTime         @default(now())
+enum Role {
+  SUPER_ADMIN
+  COMMUNITY_ADMIN
+  SECURITY
 }
 
-model CommunityAdmin {
-  id           String    @id @default(cuid())
-  username     String    @unique
+model Community {
+  id           String     @id @default(cuid())
+  name         String
+  slug         String     @unique
+  maxResidents Int        @default(50)
+  isActive     Boolean    @default(true)
+  residents    Resident[]
+  users        User[]
+  createdAt    DateTime   @default(now())
+}
+
+model User {
+  id           String     @id @default(cuid())
+  username     String     @unique
   passwordHash String
-  communityId  String
-  community    Community @relation(fields: [communityId], references: [id])
-  createdAt    DateTime  @default(now())
+  role         Role
+  communityId  String?
+  community    Community? @relation(fields: [communityId], references: [id])
+  createdAt    DateTime   @default(now())
 }
 
 model Resident {
   id           String      @id @default(cuid())
   name         String
   unit         String
-  email        String?     @unique
-  passwordHash String?
+  email        String?
+  isActive     Boolean     @default(true)
+  disabledNote String?
   token        String      @unique @default(cuid())
   communityId  String
   community    Community   @relation(fields: [communityId], references: [id])
@@ -39,13 +49,13 @@ model Resident {
 }
 
 model GuestPass {
-  id           String    @id @default(cuid())
-  shortCode    String    @unique
+  id           String   @id @default(cuid())
+  shortCode    String   @unique
   residentId   String
-  resident     Resident  @relation(fields: [residentId], references: [id], onDelete: Cascade)
-  entryType    String    @default("car")
+  resident     Resident @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  entryType    String   @default("car")
   guestName    String
-  totalPersons Int       @default(1)
+  totalPersons Int      @default(1)
   vehiclePlate String?
   carBrand     String?
   carModel     String?
@@ -54,7 +64,7 @@ model GuestPass {
   validFrom    DateTime
   validTo      DateTime
   entries      Entry[]
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime @default(now())
 }
 
 model Entry {

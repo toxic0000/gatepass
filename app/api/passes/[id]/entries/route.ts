@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireRole } from "@/lib/auth";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const user = await requireRole(req, "SECURITY");
+  if (!user?.communityId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
 
-  const pass = await db.guestPass.findUnique({ where: { id } });
-  if (!pass) {
+  const pass = await db.guestPass.findUnique({
+    where: { id },
+    include: { resident: { select: { communityId: true } } },
+  });
+  if (!pass || pass.resident.communityId !== user.communityId) {
     return NextResponse.json({ error: "Pass not found" }, { status: 404 });
   }
 

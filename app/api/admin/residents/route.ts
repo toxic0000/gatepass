@@ -1,73 +1,85 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { verifySessionToken, hashPassword, ADMIN_COOKIE } from "@/lib/admin-auth";
-
-function getSession(req: NextRequest) {
-  return verifySessionToken(req.cookies.get(ADMIN_COOKIE)?.value ?? "");
-}
+import { requireRole } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-  const session = getSession(req);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const admin = await db.communityAdmin.findUnique({
-    where: { id: session.adminId },
-    include: { community: true },
-  });
-  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const user = await requireRole(req, "COMMUNITY_ADMIN");
+  if (!user?.communityId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const residents = await db.resident.findMany({
-    where: { communityId: admin.communityId },
+    where: { communityId: user.communityId },
     orderBy: [{ unit: "asc" }],
-    select: { id: true, name: true, unit: true, email: true, token: true, createdAt: true },
+    select: {
+      id: true,
+      name: true,
+      unit: true,
+      email: true,
+      token: true,
+      isActive: true,
+      disabledNote: true,
+      createdAt: true,
+    },
   });
 
   return NextResponse.json({
-    admin: { username: admin.username, community: { name: admin.community.name } },
+    admin: {
+      username: user.username,
+      community: {
+        name: user.community!.name,
+        maxResidents: user.community!.maxResidents,
+      },
+    },
     residents,
   });
 }
 
 export async function POST(req: NextRequest) {
-  const session = getSession(req);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const user = await requireRole(req, "COMMUNITY_ADMIN");
+  if (!user?.communityId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  const admin = await db.communityAdmin.findUnique({ where: { id: session.adminId } });
-  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { name, unit, email, password } = await req.json();
+  const { name, unit, email } = await req.json();
 
   if (!name?.trim() || !unit?.trim()) {
-    return NextResponse.json({ error: "Name and unit are required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Name and unit are required" },
+      { status: 400 }
+    );
   }
 
-  const data: Prisma.ResidentCreateInput = {
-    name: name.trim(),
-    unit: unit.trim(),
-    community: { connect: { id: admin.communityId } },
-  };
+  const activeCount = await db.resident.count({
+    where: { communityId: user.communityId, isActive: true },
+  });
+  const limit = user.community!.maxResidents;
+  if (activeCount >= limit) {
+    return NextResponse.json(
+      {
+        error: `Resident limit reached (${activeCount}/${limit}). Disable a resident or ask the program administrator to raise the limit.`,
+      },
+      { status: 403 }
+    );
+  }
 
-  if (email?.trim()) {
-    data.email = email.trim().toLowerCase();
-  }
-  if (password) {
-    data.passwordHash = await hashPassword(password);
-  }
-
-  try {
-    const resident = await db.resident.create({
-      data,
-      select: { id: true, name: true, unit: true, email: true, token: true, createdAt: true },
-    });
-    return NextResponse.json(resident, { status: 201 });
-  } catch (err) {
-    if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
-      err.code === "P2002"
-    ) {
-      return NextResponse.json({ error: "Email already in use" }, { status: 409 });
-    }
-    throw err;
-  }
+  const resident = await db.resident.create({
+    data: {
+      name: name.trim(),
+      unit: unit.trim(),
+      email: email?.trim() ? email.trim().toLowerCase() : null,
+      communityId: user.communityId,
+    },
+    select: {
+      id: true,
+      name: true,
+      unit: true,
+      email: true,
+      token: true,
+      isActive: true,
+      disabledNote: true,
+      createdAt: true,
+    },
+  });
+  return NextResponse.json(resident, { status: 201 });
 }

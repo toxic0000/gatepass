@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireRole } from "@/lib/auth";
 
 const SHORT_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -20,6 +21,11 @@ async function uniqueShortCode(): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
+  const user = await requireRole(req, "SECURITY");
+  if (!user?.communityId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json();
   const { residentId, guestName, entryType, totalPersons, vehiclePlate, carBrand, carModel, carColor } = body;
 
@@ -28,8 +34,14 @@ export async function POST(req: NextRequest) {
   }
 
   const resident = await db.resident.findUnique({ where: { id: residentId } });
-  if (!resident) {
+  if (!resident || resident.communityId !== user.communityId) {
     return NextResponse.json({ error: "Resident not found" }, { status: 404 });
+  }
+  if (!resident.isActive) {
+    return NextResponse.json(
+      { error: "This resident is currently disabled — walk-in passes are not allowed." },
+      { status: 403 }
+    );
   }
 
   const shortCode = await uniqueShortCode();

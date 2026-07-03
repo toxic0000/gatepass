@@ -31,9 +31,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const resident = await db.resident.findUnique({ where: { token: residentToken } });
+  const resident = await db.resident.findUnique({
+    where: { token: residentToken },
+    include: { community: { select: { isActive: true } } },
+  });
   if (!resident) {
     return NextResponse.json({ error: "Resident not found" }, { status: 404 });
+  }
+  if (!resident.community.isActive) {
+    return NextResponse.json(
+      { error: "This community is currently disabled. Contact the program administrator." },
+      { status: 403 }
+    );
+  }
+  if (!resident.isActive) {
+    return NextResponse.json(
+      {
+        error: "Your access has been disabled by your community admin.",
+        disabledNote: resident.disabledNote,
+      },
+      { status: 403 }
+    );
   }
 
   const shortCode = await uniqueShortCode();

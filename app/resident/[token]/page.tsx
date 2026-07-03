@@ -44,10 +44,19 @@ const EMPTY_FOOT_FORM = {
   totalPersons: "1",
 };
 
+type DisabledInfo = {
+  reason: "resident_disabled" | "community_disabled";
+  disabledNote?: string | null;
+  residentName?: string;
+  unit?: string;
+  communityName?: string;
+};
+
 export default function ResidentPage() {
   const { token } = useParams<{ token: string }>();
   const [resident, setResident] = useState<Resident | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [disabled, setDisabled] = useState<DisabledInfo | null>(null);
   const [entryType, setEntryType] = useState<"car" | "foot">("car");
   const [carForm, setCarForm] = useState(EMPTY_CAR_FORM);
   const [footForm, setFootForm] = useState(EMPTY_FOOT_FORM);
@@ -58,6 +67,11 @@ export default function ResidentPage() {
 
   const loadResident = useCallback(async () => {
     const res = await fetch(`/api/residents/${token}`);
+    if (res.status === 403) {
+      const info = await res.json();
+      setDisabled(info);
+      return;
+    }
     if (!res.ok) { setError("Link not found."); return; }
     const data: Resident = await res.json();
     setResident(data);
@@ -112,7 +126,13 @@ export default function ResidentPage() {
     });
 
     setSubmitting(false);
-    if (!res.ok) { alert("Error creating pass"); return; }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      // Disabled mid-session: reload so the disabled screen takes over.
+      if (res.status === 403) { await loadResident(); return; }
+      alert(err.error ?? "Error creating pass");
+      return;
+    }
 
     setCarForm(EMPTY_CAR_FORM);
     setFootForm(EMPTY_FOOT_FORM);
@@ -128,6 +148,46 @@ export default function ResidentPage() {
       navigator.clipboard.writeText(url);
       alert("Pass link copied to clipboard!");
     }
+  }
+
+  if (disabled) {
+    const isCommunity = disabled.reason === "community_disabled";
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-sm p-8 text-center space-y-4">
+          <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto">
+            <span className="text-3xl">🚫</span>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-800">
+            {isCommunity ? "Community Disabled" : "Access Disabled"}
+          </h1>
+          {!isCommunity && disabled.residentName && (
+            <p className="text-slate-500 text-sm">
+              Unit {disabled.unit} — {disabled.residentName}
+              {disabled.communityName ? ` · ${disabled.communityName}` : ""}
+            </p>
+          )}
+          <p className="text-slate-600">
+            {isCommunity
+              ? `${disabled.communityName ?? "This community"} is currently disabled. Guest passes cannot be created or used.`
+              : "Your access to the guest pass portal has been disabled by your community admin."}
+          </p>
+          {!isCommunity && disabled.disabledNote && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-left">
+              <p className="text-xs text-amber-600 uppercase tracking-wider mb-1">
+                Message from your community admin
+              </p>
+              <p className="text-sm text-amber-900">{disabled.disabledNote}</p>
+            </div>
+          )}
+          <p className="text-slate-400 text-sm">
+            {isCommunity
+              ? "Please contact your community administration for more information."
+              : "If you believe this is a mistake, please contact your community admin."}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (error) return (
@@ -375,9 +435,10 @@ export default function ResidentPage() {
 
                   {selectedPass === pass.id && qrMap[pass.id] && (
                     <div className="mt-4 flex flex-col items-center gap-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- base64 data URL, next/image can't optimize it */}
                       <img src={qrMap[pass.id]} alt="QR Code" className="rounded-lg" />
                       <p className="text-xs text-slate-400">
-                        Can't scan? Give the guard code{" "}
+                        Can&apos;t scan? Give the guard code{" "}
                         <span className="font-mono font-bold text-slate-700 tracking-widest">{pass.shortCode}</span>
                       </p>
                     </div>

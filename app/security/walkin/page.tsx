@@ -35,10 +35,14 @@ export default function WalkinPage() {
   const [done, setDone] = useState<{ guestName: string; unit: string; residentName: string } | null>(null);
 
   useEffect(() => {
-    fetch("/api/residents")
-      .then(r => r.json())
-      .then(setResidents);
-  }, []);
+    fetch("/api/residents").then(async (r) => {
+      if (r.status === 401) {
+        router.push("/security/login");
+        return;
+      }
+      if (r.ok) setResidents(await r.json());
+    });
+  }, [router]);
 
   const resident = residents.find(r => r.id === selectedResident);
 
@@ -73,7 +77,11 @@ export default function WalkinPage() {
     });
 
     setSubmitting(false);
-    if (!res.ok) { alert("Error registering guest"); return; }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error ?? "Error registering guest");
+      return;
+    }
 
     const data = await res.json();
     setDone({
