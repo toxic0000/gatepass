@@ -21,7 +21,14 @@ tenancy, or role behavior.
 - Prisma 5 + PostgreSQL (hosted on Railway; `DATABASE_URL` in `.env`). The
   pre-rehaul code used SQLite (`prisma/dev.db`) — the switch happens in Phase 0
   of the rehaul (see `docs/REHAUL.md`).
-- Deployment target: Railway (app + Postgres service)
+- **In production on Railway** (app + Postgres in one project). Pushing to
+  `main` auto-deploys via the GitHub integration — only push verified work.
+  `railway.json` runs `npx prisma migrate deploy` pre-deploy, so migrations
+  ship with the push that needs them.
+- ⚠️ The local `.env` `DATABASE_URL` points at the **production** database
+  (Railway public URL). Destructive Prisma commands (`migrate reset`,
+  `db push --force-reset`, deleting rows) hit real data — ask before running
+  them, and clean up any test rows you create.
 - All pages are `"use client"` components fetching from `/api/*` route handlers.
   No server components with data or server actions so far.
 

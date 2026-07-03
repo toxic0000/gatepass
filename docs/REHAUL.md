@@ -171,6 +171,9 @@ database — `DATABASE_URL` in `.env` either way.
 ## Rehaul complete — 2026-07-03
 
 All five phases done and verified against the Railway Postgres database.
+**In production since 2026-07-03**: Railway project with Postgres + app
+services, auto-deploying from `main`. The seeded demo credentials
+(superadmin/super123 etc.) are live — rotate them before real use.
 Deferred ideas: friendly page for guests who scan their own QR (currently 401
 JSON), entry-log pagination/filtering, per-pass validity windows.
 
