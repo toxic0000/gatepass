@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   } = body;
 
   if (!residentToken || !entryType || !guestName || !totalPersons) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
   }
 
   const resident = await db.resident.findUnique({
@@ -36,18 +36,18 @@ export async function POST(req: NextRequest) {
     include: { community: { select: { isActive: true } } },
   });
   if (!resident) {
-    return NextResponse.json({ error: "Resident not found" }, { status: 404 });
+    return NextResponse.json({ error: "Residente no encontrado" }, { status: 404 });
   }
   if (!resident.community.isActive) {
     return NextResponse.json(
-      { error: "This community is currently disabled. Contact the program administrator." },
+      { error: "Esta comunidad está deshabilitada por el momento. Contacta al administrador del programa." },
       { status: 403 }
     );
   }
   if (!resident.isActive) {
     return NextResponse.json(
       {
-        error: "Your access has been disabled by your community admin.",
+        error: "El administrador de tu comunidad deshabilitó tu acceso.",
         disabledNote: resident.disabledNote,
       },
       { status: 403 }

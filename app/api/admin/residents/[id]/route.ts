@@ -8,7 +8,7 @@ export async function PATCH(
 ) {
   const user = await requireRole(req, "COMMUNITY_ADMIN");
   if (!user?.communityId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -23,7 +23,7 @@ export async function PATCH(
 
   const resident = await db.resident.findUnique({ where: { id } });
   if (!resident || resident.communityId !== user.communityId) {
-    return NextResponse.json({ error: "Resident not found" }, { status: 404 });
+    return NextResponse.json({ error: "Residente no encontrado" }, { status: 404 });
   }
 
   // Re-enabling counts against the community limit again.
@@ -35,7 +35,7 @@ export async function PATCH(
     if (activeCount >= limit) {
       return NextResponse.json(
         {
-          error: `Resident limit reached (${activeCount}/${limit}). Disable another resident or ask the program administrator to raise the limit.`,
+          error: `Límite de residentes alcanzado (${activeCount}/${limit}). Deshabilita otro residente o pide al administrador del programa que aumente el límite.`,
         },
         { status: 403 }
       );

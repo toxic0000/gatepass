@@ -40,10 +40,10 @@ type PassStatus = "valid" | "expired" | "upcoming" | "not_found";
 type ActionState = "idle" | "denying" | "allowed" | "denied";
 
 const statusConfig: Record<PassStatus, { bg: string; border: string; text: string; label: string; icon: string }> = {
-  valid:     { bg: "bg-emerald-50",  border: "border-emerald-300", text: "text-emerald-700",  label: "VALID",          icon: "✓" },
-  expired:   { bg: "bg-red-50",      border: "border-red-300",     text: "text-red-700",      label: "EXPIRED",        icon: "✗" },
-  upcoming:  { bg: "bg-amber-50",    border: "border-amber-300",   text: "text-amber-700",    label: "NOT YET VALID",  icon: "⏳" },
-  not_found: { bg: "bg-red-50",      border: "border-red-300",     text: "text-red-700",      label: "PASS NOT FOUND", icon: "✗" },
+  valid:     { bg: "bg-emerald-50",  border: "border-emerald-300", text: "text-emerald-700",  label: "VÁLIDO",             icon: "✓" },
+  expired:   { bg: "bg-red-50",      border: "border-red-300",     text: "text-red-700",      label: "VENCIDO",            icon: "✗" },
+  upcoming:  { bg: "bg-amber-50",    border: "border-amber-300",   text: "text-amber-700",    label: "AÚN NO VÁLIDO",      icon: "⏳" },
+  not_found: { bg: "bg-red-50",      border: "border-red-300",     text: "text-red-700",      label: "PASE NO ENCONTRADO", icon: "✗" },
 };
 
 export default function SecurityPage() {
@@ -148,10 +148,10 @@ export default function SecurityPage() {
     setLogging(false);
     if (!res.ok) {
       const err = await res.json();
-      alert(err.error ?? "Error logging entry");
+      alert(err.error ?? "Error al registrar la entrada");
       return;
     }
-    setAllowedAt(new Date().toLocaleString());
+    setAllowedAt(new Date().toLocaleString("es-MX"));
     setActionState("allowed");
     await loadRecentEntries();
   }
@@ -172,8 +172,8 @@ export default function SecurityPage() {
           <span className="text-white text-sm font-bold">G</span>
         </div>
         <div className="flex-1">
-          <h1 className="text-lg font-semibold">Security Portal</h1>
-          <p className="text-xs text-slate-400">Gate access verification</p>
+          <h1 className="text-lg font-semibold">Portal de Seguridad</h1>
+          <p className="text-xs text-slate-400">Verificación de acceso en caseta</p>
         </div>
         <button
           onClick={async () => {
@@ -182,7 +182,7 @@ export default function SecurityPage() {
           }}
           className="text-slate-400 hover:text-white text-sm transition-colors"
         >
-          Log out
+          Cerrar sesión
         </button>
       </header>
 
@@ -195,7 +195,7 @@ export default function SecurityPage() {
             {!scanning && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                 <div className="text-4xl opacity-30">📷</div>
-                <p className="text-slate-500 text-sm">Camera inactive</p>
+                <p className="text-slate-500 text-sm">Cámara inactiva</p>
               </div>
             )}
             {scanning && (
@@ -210,14 +210,14 @@ export default function SecurityPage() {
                 onClick={startScanner}
                 className="w-full bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white rounded-xl py-4 font-semibold text-base transition-colors"
               >
-                Scan QR Code
+                Escanear código QR
               </button>
             ) : (
               <button
                 onClick={stopScanner}
                 className="w-full bg-slate-600 hover:bg-slate-500 text-white rounded-xl py-4 font-semibold text-base transition-colors"
               >
-                Stop Camera
+                Detener cámara
               </button>
             )}
           </div>
@@ -225,11 +225,11 @@ export default function SecurityPage() {
 
         {/* Short code input */}
         <section className="bg-slate-800 rounded-2xl p-5">
-          <p className="text-slate-300 text-sm font-medium mb-3">Enter guest code manually</p>
+          <p className="text-slate-300 text-sm font-medium mb-3">Ingresar código del invitado manualmente</p>
           <div className="flex gap-2">
             <input
               className="flex-1 bg-slate-700 text-white rounded-xl px-4 py-3 text-lg font-mono tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-500 placeholder:normal-case placeholder:tracking-normal placeholder:text-sm"
-              placeholder="6-char code or pass link"
+              placeholder="Código de 6 caracteres o enlace del pase"
               value={codeInput}
               onChange={e => setCodeInput(e.target.value.toUpperCase())}
               onKeyDown={e => e.key === "Enter" && lookupPass(codeInput)}
@@ -239,7 +239,7 @@ export default function SecurityPage() {
               onClick={() => lookupPass(codeInput)}
               className="bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white rounded-xl px-5 font-semibold transition-colors"
             >
-              Check
+              Verificar
             </button>
           </div>
         </section>
@@ -250,17 +250,17 @@ export default function SecurityPage() {
         {actionState === "allowed" && pass && (
           <section className="rounded-2xl border-2 bg-emerald-50 border-emerald-300 p-6 text-center space-y-3">
             <div className="text-6xl leading-none">✓</div>
-            <p className="text-2xl font-bold text-emerald-700">Access Granted</p>
+            <p className="text-2xl font-bold text-emerald-700">Acceso permitido</p>
             <p className="text-lg font-semibold text-slate-800">{pass.guestName}</p>
             <p className="text-slate-600 text-sm">
-              Visiting Unit {pass.resident.unit} — {pass.resident.name}
+              Visita a Unidad {pass.resident.unit} — {pass.resident.name}
             </p>
-            {allowedAt && <p className="text-xs text-slate-400">Entry logged at {allowedAt}</p>}
+            {allowedAt && <p className="text-xs text-slate-400">Entrada registrada a las {allowedAt}</p>}
             <button
               onClick={resetResult}
               className="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl py-3 font-semibold transition-colors"
             >
-              Check next guest
+              Verificar siguiente invitado
             </button>
           </section>
         )}
@@ -269,17 +269,17 @@ export default function SecurityPage() {
         {actionState === "denied" && pass && (
           <section className="rounded-2xl border-2 bg-red-50 border-red-300 p-6 text-center space-y-3">
             <div className="text-6xl leading-none">✗</div>
-            <p className="text-2xl font-bold text-red-700">Entry Denied</p>
+            <p className="text-2xl font-bold text-red-700">Entrada negada</p>
             <p className="text-lg font-semibold text-slate-800">{pass.guestName}</p>
             <div className="bg-red-100 rounded-xl px-4 py-3 text-left">
-              <p className="text-xs text-red-500 uppercase tracking-wider mb-1">Reason</p>
+              <p className="text-xs text-red-500 uppercase tracking-wider mb-1">Motivo</p>
               <p className="text-sm text-red-800">{denialReason}</p>
             </div>
             <button
               onClick={resetResult}
               className="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl py-3 font-semibold transition-colors"
             >
-              Check next guest
+              Verificar siguiente invitado
             </button>
           </section>
         )}
@@ -295,7 +295,7 @@ export default function SecurityPage() {
             {pass && (
               <div className="space-y-3">
                 <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wider">Guest</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">Invitado</p>
                   <p className="text-xl font-bold text-slate-800">{pass.guestName}</p>
                   {pass.entryType === "car" && (
                     <p className="text-sm text-slate-500 mt-0.5">
@@ -306,27 +306,27 @@ export default function SecurityPage() {
                     </p>
                   )}
                   <p className="text-xs text-slate-400 mt-0.5">
-                    {pass.totalPersons} person{pass.totalPersons !== 1 ? "s" : ""} · {pass.entryType === "car" ? "By car" : "On foot"}
+                    {pass.totalPersons} persona{pass.totalPersons !== 1 ? "s" : ""} · {pass.entryType === "car" ? "En auto" : "A pie"}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wider">Visiting</p>
-                  <p className="text-slate-700 font-semibold">Unit {pass.resident.unit} — {pass.resident.name}</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">Visita a</p>
+                  <p className="text-slate-700 font-semibold">Unidad {pass.resident.unit} — {pass.resident.name}</p>
                   <p className="text-sm text-slate-500">{pass.resident.community.name}</p>
                 </div>
 
                 <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wider">Valid window</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">Periodo de validez</p>
                   <p className="text-sm text-slate-600">
-                    {new Date(pass.validFrom).toLocaleString()} → {new Date(pass.validTo).toLocaleString()}
+                    {new Date(pass.validFrom).toLocaleString("es-MX")} → {new Date(pass.validTo).toLocaleString("es-MX")}
                   </p>
                 </div>
 
                 {pass.entries.length > 0 && (
                   <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wider">Previous entries</p>
-                    <p className="text-sm text-slate-600">{pass.entries.length} time(s)</p>
+                    <p className="text-xs text-slate-500 uppercase tracking-wider">Entradas anteriores</p>
+                    <p className="text-sm text-slate-600">{pass.entries.length} {pass.entries.length === 1 ? "vez" : "veces"}</p>
                   </div>
                 )}
 
@@ -338,13 +338,13 @@ export default function SecurityPage() {
                       disabled={logging}
                       className="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:opacity-50 text-white rounded-xl py-4 font-semibold text-base transition-colors"
                     >
-                      {logging ? "Logging…" : "Log Entry & Allow Access"}
+                      {logging ? "Registrando…" : "Registrar entrada y permitir acceso"}
                     </button>
                     <button
                       onClick={() => setActionState("denying")}
                       className="w-full bg-white hover:bg-red-50 border-2 border-red-300 text-red-600 rounded-xl py-3 font-semibold text-base transition-colors"
                     >
-                      Deny Entry
+                      Negar entrada
                     </button>
                   </div>
                 )}
@@ -354,13 +354,13 @@ export default function SecurityPage() {
                   <div className="space-y-3 pt-1">
                     <div>
                       <label className="block text-sm font-medium text-slate-600 mb-1">
-                        Reason for denial
+                        Motivo de la negación
                       </label>
                       <textarea
                         autoFocus
                         rows={3}
                         className="w-full border-2 border-red-300 rounded-xl px-3 py-2 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-red-400 resize-none placeholder:text-slate-400"
-                        placeholder="e.g. Expired ID, unrecognized vehicle, resident did not confirm visit…"
+                        placeholder="p. ej. Identificación vencida, vehículo no reconocido, el residente no confirmó la visita…"
                         value={denialInput}
                         onChange={e => setDenialInput(e.target.value)}
                       />
@@ -371,13 +371,13 @@ export default function SecurityPage() {
                         disabled={!denialInput.trim()}
                         className="flex-1 bg-red-600 hover:bg-red-500 disabled:opacity-40 text-white rounded-xl py-3 font-semibold transition-colors"
                       >
-                        Confirm Denial
+                        Confirmar negación
                       </button>
                       <button
                         onClick={() => { setActionState("idle"); setDenialInput(""); }}
                         className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl py-3 font-semibold transition-colors"
                       >
-                        Cancel
+                        Cancelar
                       </button>
                     </div>
                   </div>
@@ -393,17 +393,17 @@ export default function SecurityPage() {
             onClick={() => router.push("/security/walkin")}
             className="w-full bg-slate-700 hover:bg-slate-600 active:bg-slate-500 text-white rounded-2xl py-5 font-semibold text-base transition-colors border border-slate-600"
           >
-            Guest has no invite?
-            <span className="block text-xs font-normal text-slate-400 mt-0.5">Register a walk-in guest</span>
+            ¿El invitado no tiene invitación?
+            <span className="block text-xs font-normal text-slate-400 mt-0.5">Registrar una visita sin invitación</span>
           </button>
         </section>
 
         {/* Recent entries */}
         <section className="pb-6">
-          <h2 className="text-slate-400 text-xs uppercase tracking-widest mb-3 px-1">Recent entries</h2>
+          <h2 className="text-slate-400 text-xs uppercase tracking-widest mb-3 px-1">Entradas recientes</h2>
           {recentEntries.length === 0 ? (
             <div className="bg-slate-800 rounded-2xl p-6 text-center text-slate-500 text-sm">
-              No entries yet today
+              Aún no hay entradas hoy
             </div>
           ) : (
             <div className="bg-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-700">
@@ -415,14 +415,14 @@ export default function SecurityPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm font-medium truncate">{entry.guestPass.guestName}</p>
                     <p className="text-slate-400 text-xs truncate">
-                      Unit {entry.guestPass.resident.unit} — {entry.guestPass.resident.name}
+                      Unidad {entry.guestPass.resident.unit} — {entry.guestPass.resident.name}
                       {entry.guestPass.vehiclePlate && (
                         <span className="ml-1 font-mono">· {entry.guestPass.vehiclePlate}</span>
                       )}
                     </p>
                   </div>
                   <p className="text-slate-500 text-xs shrink-0">
-                    {new Date(entry.enteredAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(entry.enteredAt).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
               ))}

@@ -72,7 +72,7 @@ export default function ResidentPage() {
       setDisabled(info);
       return;
     }
-    if (!res.ok) { setError("Link not found."); return; }
+    if (!res.ok) { setError("Enlace no encontrado."); return; }
     const data: Resident = await res.json();
     setResident(data);
 
@@ -114,7 +114,7 @@ export default function ResidentPage() {
         : {
             residentToken: token,
             entryType: "foot",
-            guestName: footNames[0] || "Guest",
+            guestName: footNames[0] || "Invitado",
             totalPersons: footForm.totalPersons,
             guestNames: footNames,
           };
@@ -130,7 +130,7 @@ export default function ResidentPage() {
       const err = await res.json().catch(() => ({}));
       // Disabled mid-session: reload so the disabled screen takes over.
       if (res.status === 403) { await loadResident(); return; }
-      alert(err.error ?? "Error creating pass");
+      alert(err.error ?? "Error al crear el pase");
       return;
     }
 
@@ -143,10 +143,10 @@ export default function ResidentPage() {
   function sharePass(passId: string) {
     const url = `${window.location.origin}/api/passes/${passId}`;
     if (navigator.share) {
-      navigator.share({ title: "Guest Pass", url });
+      navigator.share({ title: "Pase de invitado", url });
     } else {
       navigator.clipboard.writeText(url);
-      alert("Pass link copied to clipboard!");
+      alert("¡Enlace del pase copiado al portapapeles!");
     }
   }
 
@@ -159,31 +159,31 @@ export default function ResidentPage() {
             <span className="text-3xl">🚫</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-800">
-            {isCommunity ? "Community Disabled" : "Access Disabled"}
+            {isCommunity ? "Comunidad deshabilitada" : "Acceso deshabilitado"}
           </h1>
           {!isCommunity && disabled.residentName && (
             <p className="text-slate-500 text-sm">
-              Unit {disabled.unit} — {disabled.residentName}
+              Unidad {disabled.unit} — {disabled.residentName}
               {disabled.communityName ? ` · ${disabled.communityName}` : ""}
             </p>
           )}
           <p className="text-slate-600">
             {isCommunity
-              ? `${disabled.communityName ?? "This community"} is currently disabled. Guest passes cannot be created or used.`
-              : "Your access to the guest pass portal has been disabled by your community admin."}
+              ? `${disabled.communityName ?? "Esta comunidad"} está deshabilitada por el momento. No se pueden crear ni usar pases de invitado.`
+              : "El administrador de tu comunidad deshabilitó tu acceso al portal de pases."}
           </p>
           {!isCommunity && disabled.disabledNote && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-left">
               <p className="text-xs text-amber-600 uppercase tracking-wider mb-1">
-                Message from your community admin
+                Mensaje del administrador de tu comunidad
               </p>
               <p className="text-sm text-amber-900">{disabled.disabledNote}</p>
             </div>
           )}
           <p className="text-slate-400 text-sm">
             {isCommunity
-              ? "Please contact your community administration for more information."
-              : "If you believe this is a mistake, please contact your community admin."}
+              ? "Contacta a la administración de tu comunidad para más información."
+              : "Si crees que se trata de un error, contacta al administrador de tu comunidad."}
           </p>
         </div>
       </div>
@@ -198,7 +198,7 @@ export default function ResidentPage() {
 
   if (!resident) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <p className="text-slate-400">Loading…</p>
+      <p className="text-slate-400">Cargando…</p>
     </div>
   );
 
@@ -208,14 +208,14 @@ export default function ResidentPage() {
     <div className="min-h-screen bg-slate-50">
       <header className="bg-slate-800 text-white px-6 py-4">
         <p className="text-xs text-slate-400 uppercase tracking-widest">{resident.community.name}</p>
-        <h1 className="text-xl font-semibold">Unit {resident.unit} — {resident.name}</h1>
+        <h1 className="text-xl font-semibold">Unidad {resident.unit} — {resident.name}</h1>
       </header>
 
       <main className="max-w-2xl mx-auto p-6 space-y-8">
 
         {/* Create pass form */}
         <section className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">Create Guest Pass</h2>
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">Crear pase de invitado</h2>
 
           {/* Entry type toggle */}
           <div className="flex gap-2 mb-6">
@@ -228,7 +228,7 @@ export default function ResidentPage() {
                   : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
               }`}
             >
-              By Car
+              En auto
             </button>
             <button
               type="button"
@@ -239,7 +239,7 @@ export default function ResidentPage() {
                   : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
               }`}
             >
-              On Foot
+              A pie
             </button>
           </div>
 
@@ -247,19 +247,19 @@ export default function ResidentPage() {
             {entryType === "car" ? (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1">Main guest name *</label>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Nombre del invitado principal *</label>
                   <input
                     required
                     className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
                     value={carForm.guestName}
                     onChange={e => setCarForm(f => ({ ...f, guestName: e.target.value }))}
-                    placeholder="John Smith"
+                    placeholder="Juan Pérez"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Car brand *</label>
+                    <label className="block text-sm font-medium text-slate-600 mb-1">Marca del auto *</label>
                     <input
                       required
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
@@ -269,7 +269,7 @@ export default function ResidentPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Car model *</label>
+                    <label className="block text-sm font-medium text-slate-600 mb-1">Modelo del auto *</label>
                     <input
                       required
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
@@ -282,17 +282,17 @@ export default function ResidentPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Car color *</label>
+                    <label className="block text-sm font-medium text-slate-600 mb-1">Color del auto *</label>
                     <input
                       required
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
                       value={carForm.carColor}
                       onChange={e => setCarForm(f => ({ ...f, carColor: e.target.value }))}
-                      placeholder="Silver"
+                      placeholder="Plateado"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Vehicle plate</label>
+                    <label className="block text-sm font-medium text-slate-600 mb-1">Placas</label>
                     <input
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
                       value={carForm.vehiclePlate}
@@ -303,7 +303,7 @@ export default function ResidentPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1">Total persons *</label>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Total de personas *</label>
                   <input
                     required
                     type="number"
@@ -317,7 +317,7 @@ export default function ResidentPage() {
             ) : (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1">Total persons *</label>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Total de personas *</label>
                   <input
                     required
                     type="number"
@@ -329,7 +329,7 @@ export default function ResidentPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-slate-600">Guest names *</label>
+                  <label className="block text-sm font-medium text-slate-600">Nombres de los invitados *</label>
                   {footNames.map((name, i) => (
                     <input
                       key={i}
@@ -341,7 +341,7 @@ export default function ResidentPage() {
                         updated[i] = e.target.value;
                         setFootNames(updated);
                       }}
-                      placeholder={i === 0 ? "Guest 1 (main)" : `Guest ${i + 1}`}
+                      placeholder={i === 0 ? "Invitado 1 (principal)" : `Invitado ${i + 1}`}
                     />
                   ))}
                 </div>
@@ -353,7 +353,7 @@ export default function ResidentPage() {
               disabled={submitting}
               className="w-full bg-slate-800 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-slate-700 disabled:opacity-50 transition-colors"
             >
-              {submitting ? "Creating…" : "Generate Pass"}
+              {submitting ? "Creando…" : "Generar pase"}
             </button>
           </form>
         </section>
@@ -361,7 +361,7 @@ export default function ResidentPage() {
         {/* Existing passes */}
         {resident.guestPasses.length > 0 && (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-slate-800">Your Passes</h2>
+            <h2 className="text-lg font-semibold text-slate-800">Tus pases</h2>
             {resident.guestPasses.map(pass => {
               const active = new Date(pass.validFrom) <= now && now <= new Date(pass.validTo);
               const expired = now > new Date(pass.validTo);
@@ -374,7 +374,7 @@ export default function ResidentPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-slate-800">{pass.guestName}</p>
                         <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium uppercase tracking-wide">
-                          {pass.entryType === "car" ? "By car" : "On foot"}
+                          {pass.entryType === "car" ? "En auto" : "A pie"}
                         </span>
                       </div>
 
@@ -392,13 +392,13 @@ export default function ResidentPage() {
                       )}
 
                       <p className="text-xs text-slate-400 mt-1">
-                        {pass.totalPersons} person{pass.totalPersons !== 1 ? "s" : ""} ·{" "}
-                        {new Date(pass.validFrom).toLocaleString()} → {new Date(pass.validTo).toLocaleString()}
+                        {pass.totalPersons} persona{pass.totalPersons !== 1 ? "s" : ""} ·{" "}
+                        {new Date(pass.validFrom).toLocaleString("es-MX")} → {new Date(pass.validTo).toLocaleString("es-MX")}
                       </p>
 
                       {pass.entries.length > 0 && (
                         <p className="text-xs text-emerald-600 mt-1">
-                          Entered {pass.entries.length}x — last: {new Date(pass.entries[0].enteredAt).toLocaleString()}
+                          Entró {pass.entries.length} {pass.entries.length === 1 ? "vez" : "veces"} — última: {new Date(pass.entries[0].enteredAt).toLocaleString("es-MX")}
                         </p>
                       )}
                     </div>
@@ -408,13 +408,13 @@ export default function ResidentPage() {
                       expired ? "bg-slate-100 text-slate-400" :
                       "bg-amber-100 text-amber-700"
                     }`}>
-                      {active ? "Active" : expired ? "Expired" : "Upcoming"}
+                      {active ? "Vigente" : expired ? "Vencido" : "Próximo"}
                     </span>
                   </div>
 
                   {/* Short code */}
                   <div className="mt-3 inline-flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
-                    <span className="text-xs text-slate-400 uppercase tracking-wide">Code</span>
+                    <span className="text-xs text-slate-400 uppercase tracking-wide">Código</span>
                     <span className="font-mono font-bold text-slate-800 tracking-widest text-base">{pass.shortCode}</span>
                   </div>
 
@@ -423,22 +423,22 @@ export default function ResidentPage() {
                       onClick={() => setSelectedPass(selectedPass === pass.id ? null : pass.id)}
                       className="text-sm text-slate-600 underline"
                     >
-                      {selectedPass === pass.id ? "Hide QR" : "Show QR"}
+                      {selectedPass === pass.id ? "Ocultar QR" : "Mostrar QR"}
                     </button>
                     <button
                       onClick={() => sharePass(pass.id)}
                       className="text-sm text-slate-600 underline"
                     >
-                      Share link
+                      Compartir enlace
                     </button>
                   </div>
 
                   {selectedPass === pass.id && qrMap[pass.id] && (
                     <div className="mt-4 flex flex-col items-center gap-2">
                       {/* eslint-disable-next-line @next/next/no-img-element -- base64 data URL, next/image can't optimize it */}
-                      <img src={qrMap[pass.id]} alt="QR Code" className="rounded-lg" />
+                      <img src={qrMap[pass.id]} alt="Código QR" className="rounded-lg" />
                       <p className="text-xs text-slate-400">
-                        Can&apos;t scan? Give the guard code{" "}
+                        ¿No se puede escanear? Dale al guardia el código{" "}
                         <span className="font-mono font-bold text-slate-700 tracking-widest">{pass.shortCode}</span>
                       </p>
                     </div>

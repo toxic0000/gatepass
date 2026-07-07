@@ -5,7 +5,7 @@ import { requireRole } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   const user = await requireRole(req, "COMMUNITY_ADMIN");
   if (!user?.communityId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const entries = await db.entry.findMany({

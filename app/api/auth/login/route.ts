@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   if (!username || !password) {
     return NextResponse.json(
-      { error: "Username and password are required" },
+      { error: "Se requieren usuario y contraseña" },
       { status: 400 }
     );
   }
@@ -24,14 +24,14 @@ export async function POST(req: NextRequest) {
 
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     return NextResponse.json(
-      { error: "Invalid username or password" },
+      { error: "Usuario o contraseña incorrectos" },
       { status: 401 }
     );
   }
 
   if (user.community && !user.community.isActive) {
     return NextResponse.json(
-      { error: "This community is currently disabled. Contact the program administrator." },
+      { error: "Esta comunidad está deshabilitada por el momento. Contacta al administrador del programa." },
       { status: 403 }
     );
   }

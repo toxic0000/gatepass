@@ -112,7 +112,7 @@ export default function AdminDashboard() {
     setSubmitting(false);
     if (!res.ok) {
       const err = await res.json();
-      alert(err.error ?? "Failed to create resident");
+      alert(err.error ?? "No se pudo crear el residente");
       return;
     }
     const created: Resident = await res.json();
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
     let disabledNote: string | null = null;
     if (r.isActive) {
       disabledNote = prompt(
-        `Disable ${r.name}? They will lose access to their portal.\n\nOptional note shown to the resident (e.g. reason):`
+        `¿Deshabilitar a ${r.name}? Perderá el acceso a su portal.\n\nNota opcional que verá el residente (p. ej. el motivo):`
       );
       if (disabledNote === null) return; // cancelled
     }
@@ -139,7 +139,7 @@ export default function AdminDashboard() {
     setTogglingId(null);
     if (!res.ok) {
       const err = await res.json();
-      alert(err.error ?? "Failed to update resident");
+      alert(err.error ?? "No se pudo actualizar el residente");
       return;
     }
     await load();
@@ -156,7 +156,7 @@ export default function AdminDashboard() {
     setSecuritySubmitting(false);
     if (!res.ok) {
       const err = await res.json();
-      alert(err.error ?? "Failed to create security user");
+      alert(err.error ?? "No se pudo crear el usuario de seguridad");
       return;
     }
     setSecurityForm(EMPTY_SECURITY_FORM);
@@ -165,7 +165,7 @@ export default function AdminDashboard() {
   }
 
   async function removeSecurityUser(u: SecurityUser) {
-    if (!confirm(`Remove security user ${u.username}?`)) return;
+    if (!confirm(`¿Eliminar al usuario de seguridad ${u.username}?`)) return;
     setRemovingId(u.id);
     const res = await fetch(`/api/admin/security/${u.id}`, {
       method: "DELETE",
@@ -173,7 +173,7 @@ export default function AdminDashboard() {
     setRemovingId(null);
     if (!res.ok) {
       const err = await res.json();
-      alert(err.error ?? "Failed to remove security user");
+      alert(err.error ?? "No se pudo eliminar el usuario de seguridad");
       return;
     }
     await loadSecurity();
@@ -194,7 +194,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <p className="text-slate-400">Loading…</p>
+        <p className="text-slate-400">Cargando…</p>
       </div>
     );
   }
@@ -206,9 +206,9 @@ export default function AdminDashboard() {
   const atCap = activeCount >= maxResidents;
 
   const TABS: { key: Tab; label: string }[] = [
-    { key: "residents", label: "Residents" },
-    { key: "entries", label: "Entry Log" },
-    { key: "security", label: "Security" },
+    { key: "residents", label: "Residentes" },
+    { key: "entries", label: "Registro de entradas" },
+    { key: "security", label: "Seguridad" },
   ];
 
   return (
@@ -219,14 +219,14 @@ export default function AdminDashboard() {
           <span className="text-white text-sm font-bold">A</span>
         </div>
         <div className="flex-1">
-          <h1 className="text-lg font-semibold text-white">Admin Portal</h1>
+          <h1 className="text-lg font-semibold text-white">Portal de Administración</h1>
           <p className="text-xs text-slate-400">{communityName}</p>
         </div>
         <button
           onClick={logout}
           className="text-slate-400 hover:text-white text-sm transition-colors"
         >
-          Log out
+          Cerrar sesión
         </button>
       </header>
 
@@ -255,10 +255,10 @@ export default function AdminDashboard() {
             {newToken && (
               <section className="bg-emerald-900/40 border border-emerald-700 rounded-2xl p-5">
                 <p className="text-emerald-400 font-semibold mb-1">
-                  Resident created!
+                  ¡Residente creado!
                 </p>
                 <p className="text-slate-300 text-sm mb-3">
-                  Share this portal link with the resident:
+                  Comparte este enlace del portal con el residente:
                 </p>
                 <div className="flex gap-2">
                   <code className="flex-1 bg-slate-900 text-emerald-400 rounded-xl px-3 py-2 text-sm truncate font-mono">
@@ -270,14 +270,14 @@ export default function AdminDashboard() {
                     onClick={() => copyLink(newToken)}
                     className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl px-4 text-sm font-medium transition-colors shrink-0"
                   >
-                    {copied === newToken ? "Copied!" : "Copy"}
+                    {copied === newToken ? "¡Copiado!" : "Copiar"}
                   </button>
                 </div>
                 <button
                   onClick={() => setNewToken(null)}
                   className="mt-3 text-slate-500 hover:text-slate-400 text-xs transition-colors"
                 >
-                  Dismiss
+                  Descartar
                 </button>
               </section>
             )}
@@ -286,14 +286,14 @@ export default function AdminDashboard() {
             <section className="bg-slate-800 rounded-2xl overflow-hidden">
               <div className="px-5 py-4 flex items-center justify-between">
                 <div>
-                  <h2 className="text-white font-semibold">Residents</h2>
+                  <h2 className="text-white font-semibold">Residentes</h2>
                   <p
                     className={`text-xs mt-0.5 ${
                       atCap ? "text-amber-400" : "text-slate-500"
                     }`}
                   >
-                    {activeCount}/{maxResidents} active
-                    {atCap ? " · limit reached" : ""}
+                    {activeCount}/{maxResidents} activos
+                    {atCap ? " · límite alcanzado" : ""}
                   </p>
                 </div>
                 <button
@@ -304,7 +304,7 @@ export default function AdminDashboard() {
                   disabled={!showForm && atCap}
                   className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl px-4 py-2 text-sm font-medium transition-colors"
                 >
-                  {showForm ? "Cancel" : "+ New Resident"}
+                  {showForm ? "Cancelar" : "+ Nuevo residente"}
                 </button>
               </div>
 
@@ -317,7 +317,7 @@ export default function AdminDashboard() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs text-slate-400 mb-1">
-                        Full name *
+                        Nombre completo *
                       </label>
                       <input
                         required
@@ -326,12 +326,12 @@ export default function AdminDashboard() {
                           setForm((f) => ({ ...f, name: e.target.value }))
                         }
                         className="w-full bg-slate-700 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 placeholder:text-slate-500"
-                        placeholder="Jane Doe"
+                        placeholder="María López"
                       />
                     </div>
                     <div>
                       <label className="block text-xs text-slate-400 mb-1">
-                        Unit *
+                        Unidad *
                       </label>
                       <input
                         required
@@ -346,9 +346,9 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <label className="block text-xs text-slate-400 mb-1">
-                      Email{" "}
+                      Correo electrónico{" "}
                       <span className="text-slate-600">
-                        (optional, contact only)
+                        (opcional, solo contacto)
                       </span>
                     </label>
                     <input
@@ -358,7 +358,7 @@ export default function AdminDashboard() {
                         setForm((f) => ({ ...f, email: e.target.value }))
                       }
                       className="w-full bg-slate-700 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 placeholder:text-slate-500"
-                      placeholder="resident@example.com"
+                      placeholder="residente@ejemplo.com"
                     />
                   </div>
                   <button
@@ -366,7 +366,7 @@ export default function AdminDashboard() {
                     disabled={submitting}
                     className="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 disabled:opacity-50 text-white rounded-xl py-3 font-semibold text-sm transition-colors"
                   >
-                    {submitting ? "Creating…" : "Create Resident"}
+                    {submitting ? "Creando…" : "Crear residente"}
                   </button>
                 </form>
               )}
@@ -375,7 +375,7 @@ export default function AdminDashboard() {
             {/* Residents list */}
             {residents.length === 0 ? (
               <div className="bg-slate-800 rounded-2xl p-8 text-center text-slate-500 text-sm">
-                No residents yet. Add the first one above.
+                Aún no hay residentes. Agrega el primero arriba.
               </div>
             ) : (
               <div className="bg-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-700">
@@ -391,11 +391,11 @@ export default function AdminDashboard() {
                             {r.name}
                           </span>
                           <span className="bg-slate-700 text-slate-300 text-xs px-2 py-0.5 rounded-full">
-                            Unit {r.unit}
+                            Unidad {r.unit}
                           </span>
                           {!r.isActive && (
                             <span className="bg-red-900/60 text-red-400 text-xs px-2 py-0.5 rounded-full">
-                              Disabled
+                              Deshabilitado
                             </span>
                           )}
                         </div>
@@ -406,7 +406,7 @@ export default function AdminDashboard() {
                         )}
                         {!r.isActive && r.disabledNote && (
                           <p className="text-amber-400/90 text-xs mt-1">
-                            Note: {r.disabledNote}
+                            Nota: {r.disabledNote}
                           </p>
                         )}
                         <div className="flex items-center gap-2 mt-2">
@@ -417,7 +417,7 @@ export default function AdminDashboard() {
                             onClick={() => copyLink(r.token)}
                             className="text-slate-500 hover:text-slate-300 text-xs transition-colors shrink-0"
                           >
-                            {copied === r.token ? "Copied!" : "Copy link"}
+                            {copied === r.token ? "¡Copiado!" : "Copiar enlace"}
                           </button>
                         </div>
                       </div>
@@ -431,10 +431,10 @@ export default function AdminDashboard() {
                         }`}
                       >
                         {togglingId === r.id
-                          ? "Saving…"
+                          ? "Guardando…"
                           : r.isActive
-                            ? "Disable"
-                            : "Enable"}
+                            ? "Deshabilitar"
+                            : "Habilitar"}
                       </button>
                     </div>
                   </div>
@@ -449,23 +449,23 @@ export default function AdminDashboard() {
           <section className="bg-slate-800 rounded-2xl overflow-hidden">
             <div className="px-5 py-4 flex items-center justify-between">
               <div>
-                <h2 className="text-white font-semibold">Entry Log</h2>
+                <h2 className="text-white font-semibold">Registro de entradas</h2>
                 <p className="text-slate-500 text-xs mt-0.5">
-                  Latest {entries?.length ?? 0} gate entries
+                  Últimas {entries?.length ?? 0} entradas en caseta
                 </p>
               </div>
               <button
                 onClick={loadEntries}
                 className="text-slate-400 hover:text-white text-sm transition-colors"
               >
-                Refresh
+                Actualizar
               </button>
             </div>
             {entries === null ? (
-              <p className="px-5 pb-5 text-slate-500 text-sm">Loading…</p>
+              <p className="px-5 pb-5 text-slate-500 text-sm">Cargando…</p>
             ) : entries.length === 0 ? (
               <p className="px-5 pb-5 text-slate-500 text-sm">
-                No entries recorded yet.
+                Aún no hay entradas registradas.
               </p>
             ) : (
               <div className="divide-y divide-slate-700 border-t border-slate-700">
@@ -483,17 +483,17 @@ export default function AdminDashboard() {
                           )}
                           <span className="text-slate-500 font-normal">
                             {" "}
-                            · {e.guestPass.entryType}
+                            · {e.guestPass.entryType === "car" ? "en auto" : "a pie"}
                           </span>
                         </p>
                         <p className="text-slate-400 text-xs mt-0.5 truncate">
-                          Guest of {e.guestPass.resident.name} · Unit{" "}
+                          Invitado de {e.guestPass.resident.name} · Unidad{" "}
                           {e.guestPass.resident.unit}
                           {e.note ? ` · ${e.note}` : ""}
                         </p>
                       </div>
                       <p className="text-slate-500 text-xs shrink-0 text-right">
-                        {new Date(e.enteredAt).toLocaleString()}
+                        {new Date(e.enteredAt).toLocaleString("es-MX")}
                       </p>
                     </div>
                   </div>
@@ -508,9 +508,9 @@ export default function AdminDashboard() {
           <section className="bg-slate-800 rounded-2xl overflow-hidden">
             <div className="px-5 py-4 flex items-center justify-between">
               <div>
-                <h2 className="text-white font-semibold">Security Users</h2>
+                <h2 className="text-white font-semibold">Usuarios de seguridad</h2>
                 <p className="text-slate-500 text-xs mt-0.5">
-                  Gate staff accounts for {communityName}
+                  Cuentas del personal de caseta de {communityName}
                 </p>
               </div>
               <button
@@ -520,7 +520,7 @@ export default function AdminDashboard() {
                 }}
                 className="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white rounded-xl px-4 py-2 text-sm font-medium transition-colors"
               >
-                {showSecurityForm ? "Cancel" : "+ New User"}
+                {showSecurityForm ? "Cancelar" : "+ Nuevo usuario"}
               </button>
             </div>
 
@@ -532,7 +532,7 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-slate-400 mb-1">
-                      Username *
+                      Usuario *
                     </label>
                     <input
                       required
@@ -550,7 +550,7 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <label className="block text-xs text-slate-400 mb-1">
-                      Password *
+                      Contraseña *
                     </label>
                     <input
                       required
@@ -573,16 +573,16 @@ export default function AdminDashboard() {
                   disabled={securitySubmitting}
                   className="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 disabled:opacity-50 text-white rounded-xl py-3 font-semibold text-sm transition-colors"
                 >
-                  {securitySubmitting ? "Creating…" : "Create Security User"}
+                  {securitySubmitting ? "Creando…" : "Crear usuario de seguridad"}
                 </button>
               </form>
             )}
 
             {securityUsers === null ? (
-              <p className="px-5 pb-5 text-slate-500 text-sm">Loading…</p>
+              <p className="px-5 pb-5 text-slate-500 text-sm">Cargando…</p>
             ) : securityUsers.length === 0 ? (
               <p className="px-5 pb-5 text-slate-500 text-sm">
-                No security users yet. The gate portal needs at least one.
+                Aún no hay usuarios de seguridad. El portal de caseta necesita al menos uno.
               </p>
             ) : (
               <div className="divide-y divide-slate-700 border-t border-slate-700">
@@ -596,7 +596,7 @@ export default function AdminDashboard() {
                         {u.username}
                       </p>
                       <p className="text-slate-500 text-xs mt-0.5">
-                        Added {new Date(u.createdAt).toLocaleDateString()}
+                        Agregado el {new Date(u.createdAt).toLocaleDateString("es-MX")}
                       </p>
                     </div>
                     <button
@@ -604,7 +604,7 @@ export default function AdminDashboard() {
                       disabled={removingId === u.id}
                       className="text-red-500 hover:text-red-400 disabled:opacity-40 text-sm shrink-0 transition-colors"
                     >
-                      {removingId === u.id ? "Removing…" : "Remove"}
+                      {removingId === u.id ? "Eliminando…" : "Eliminar"}
                     </button>
                   </div>
                 ))}

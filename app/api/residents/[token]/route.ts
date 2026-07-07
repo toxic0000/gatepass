@@ -19,13 +19,13 @@ export async function GET(
   });
 
   if (!resident) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   }
 
   if (!resident.community.isActive) {
     return NextResponse.json(
       {
-        error: "This community is currently disabled.",
+        error: "Esta comunidad está deshabilitada por el momento.",
         reason: "community_disabled",
         communityName: resident.community.name,
       },
@@ -36,7 +36,7 @@ export async function GET(
   if (!resident.isActive) {
     return NextResponse.json(
       {
-        error: "Your access has been disabled by your community admin.",
+        error: "El administrador de tu comunidad deshabilitó tu acceso.",
         reason: "resident_disabled",
         disabledNote: resident.disabledNote,
         residentName: resident.name,

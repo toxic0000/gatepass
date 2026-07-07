@@ -8,7 +8,7 @@ export async function GET(
 ) {
   const user = await requireRole(req, "SECURITY");
   if (!user?.communityId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -28,7 +28,7 @@ export async function GET(
 
   // Passes from other communities look like they don't exist.
   if (!pass || pass.resident.communityId !== user.communityId) {
-    return NextResponse.json({ error: "Pass not found" }, { status: 404 });
+    return NextResponse.json({ error: "Pase no encontrado" }, { status: 404 });
   }
 
   return NextResponse.json(pass);

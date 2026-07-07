@@ -9,7 +9,7 @@ export async function PATCH(
 ) {
   const user = await requireRole(req, "SUPER_ADMIN");
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -20,7 +20,7 @@ export async function PATCH(
     const limit = Number(body.maxResidents);
     if (!Number.isInteger(limit) || limit < 1) {
       return NextResponse.json(
-        { error: "Max residents must be a positive number" },
+        { error: "El máximo de residentes debe ser un número positivo" },
         { status: 400 }
       );
     }
@@ -31,12 +31,12 @@ export async function PATCH(
   }
   if (body.name !== undefined) {
     if (!body.name.trim()) {
-      return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 });
+      return NextResponse.json({ error: "El nombre no puede estar vacío" }, { status: 400 });
     }
     data.name = body.name.trim();
   }
   if (Object.keys(data).length === 0) {
-    return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+    return NextResponse.json({ error: "Nada que actualizar" }, { status: 400 });
   }
 
   try {
@@ -47,7 +47,7 @@ export async function PATCH(
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2025"
     ) {
-      return NextResponse.json({ error: "Community not found" }, { status: 404 });
+      return NextResponse.json({ error: "Comunidad no encontrada" }, { status: 404 });
     }
     throw err;
   }

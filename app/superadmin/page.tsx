@@ -22,7 +22,7 @@ export default function SuperAdminLogin() {
     setLoading(false);
     if (!res.ok) {
       const err = await res.json();
-      setError(err.error ?? "Login failed");
+      setError(err.error ?? "No se pudo iniciar sesión");
       return;
     }
     const { role } = await res.json();
@@ -38,8 +38,8 @@ export default function SuperAdminLogin() {
           <div className="w-16 h-16 bg-sky-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <span className="text-white text-3xl font-bold">S</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">Super Admin</h1>
-          <p className="text-slate-400 text-sm mt-1">Program management</p>
+          <h1 className="text-2xl font-bold text-white">Súper Admin</h1>
+          <p className="text-slate-400 text-sm mt-1">Administración del programa</p>
         </div>
 
         <form
@@ -48,7 +48,7 @@ export default function SuperAdminLogin() {
         >
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">
-              Username
+              Usuario
             </label>
             <input
               type="text"
@@ -62,7 +62,7 @@ export default function SuperAdminLogin() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">
-              Password
+              Contraseña
             </label>
             <input
               type="password"
@@ -82,7 +82,7 @@ export default function SuperAdminLogin() {
             disabled={loading}
             className="w-full bg-sky-600 hover:bg-sky-500 active:bg-sky-700 disabled:opacity-50 text-white rounded-xl py-3 font-semibold transition-colors"
           >
-            {loading ? "Signing in…" : "Sign In"}
+            {loading ? "Iniciando sesión…" : "Iniciar sesión"}
           </button>
         </form>
       </div>

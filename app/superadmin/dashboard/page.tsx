@@ -61,7 +61,7 @@ export default function SuperAdminDashboard() {
     setSubmitting(false);
     if (!res.ok) {
       const err = await res.json();
-      alert(err.error ?? "Failed to create community");
+      alert(err.error ?? "No se pudo crear la comunidad");
       return;
     }
     setForm(EMPTY_FORM);
@@ -73,7 +73,7 @@ export default function SuperAdminDashboard() {
     if (
       c.isActive &&
       !confirm(
-        `Disable ${c.name}? Its admins, security and residents will lose access immediately.`
+        `¿Deshabilitar ${c.name}? Sus administradores, seguridad y residentes perderán el acceso de inmediato.`
       )
     )
       return;
@@ -86,7 +86,7 @@ export default function SuperAdminDashboard() {
     setTogglingId(null);
     if (!res.ok) {
       const err = await res.json();
-      alert(err.error ?? "Failed to update community");
+      alert(err.error ?? "No se pudo actualizar la comunidad");
       return;
     }
     await load();
@@ -100,7 +100,7 @@ export default function SuperAdminDashboard() {
     });
     if (!res.ok) {
       const err = await res.json();
-      alert(err.error ?? "Failed to update limit");
+      alert(err.error ?? "No se pudo actualizar el límite");
       return;
     }
     setEditingId(null);
@@ -115,7 +115,7 @@ export default function SuperAdminDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <p className="text-slate-400">Loading…</p>
+        <p className="text-slate-400">Cargando…</p>
       </div>
     );
   }
@@ -130,16 +130,16 @@ export default function SuperAdminDashboard() {
           <span className="text-white text-sm font-bold">S</span>
         </div>
         <div className="flex-1">
-          <h1 className="text-lg font-semibold text-white">Super Admin</h1>
+          <h1 className="text-lg font-semibold text-white">Súper Admin</h1>
           <p className="text-xs text-slate-400">
-            {data?.user.username} · Program management
+            {data?.user.username} · Administración del programa
           </p>
         </div>
         <button
           onClick={logout}
           className="text-slate-400 hover:text-white text-sm transition-colors"
         >
-          Log out
+          Cerrar sesión
         </button>
       </header>
 
@@ -148,10 +148,10 @@ export default function SuperAdminDashboard() {
         <section className="bg-slate-800 rounded-2xl overflow-hidden">
           <div className="px-5 py-4 flex items-center justify-between">
             <div>
-              <h2 className="text-white font-semibold">Communities</h2>
+              <h2 className="text-white font-semibold">Comunidades</h2>
               <p className="text-slate-500 text-xs mt-0.5">
                 {communities.length}{" "}
-                {communities.length === 1 ? "community" : "communities"}
+                {communities.length === 1 ? "comunidad" : "comunidades"}
               </p>
             </div>
             <button
@@ -161,7 +161,7 @@ export default function SuperAdminDashboard() {
               }}
               className="bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-xl px-4 py-2 text-sm font-medium transition-colors"
             >
-              {showForm ? "Cancel" : "+ New Community"}
+              {showForm ? "Cancelar" : "+ Nueva comunidad"}
             </button>
           </div>
 
@@ -174,7 +174,7 @@ export default function SuperAdminDashboard() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">
-                    Community name *
+                    Nombre de la comunidad *
                   </label>
                   <input
                     required
@@ -183,12 +183,12 @@ export default function SuperAdminDashboard() {
                       setForm((f) => ({ ...f, name: e.target.value }))
                     }
                     className="w-full bg-slate-700 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 placeholder:text-slate-500"
-                    placeholder="Sunset Hills"
+                    placeholder="Lomas del Sol"
                   />
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">
-                    Max residents *
+                    Máximo de residentes *
                   </label>
                   <input
                     required
@@ -205,7 +205,7 @@ export default function SuperAdminDashboard() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">
-                    Admin username *
+                    Usuario del administrador *
                   </label>
                   <input
                     required
@@ -220,7 +220,7 @@ export default function SuperAdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">
-                    Admin password *
+                    Contraseña del administrador *
                   </label>
                   <input
                     required
@@ -240,7 +240,7 @@ export default function SuperAdminDashboard() {
                 disabled={submitting}
                 className="w-full bg-sky-600 hover:bg-sky-500 active:bg-sky-700 disabled:opacity-50 text-white rounded-xl py-3 font-semibold text-sm transition-colors"
               >
-                {submitting ? "Creating…" : "Create Community"}
+                {submitting ? "Creando…" : "Crear comunidad"}
               </button>
             </form>
           )}
@@ -249,7 +249,7 @@ export default function SuperAdminDashboard() {
         {/* Communities list */}
         {communities.length === 0 ? (
           <div className="bg-slate-800 rounded-2xl p-8 text-center text-slate-500 text-sm">
-            No communities yet. Add the first one above.
+            Aún no hay comunidades. Agrega la primera arriba.
           </div>
         ) : (
           <div className="bg-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-700">
@@ -261,29 +261,29 @@ export default function SuperAdminDashboard() {
                       <span className="text-white font-semibold">{c.name}</span>
                       {c.isActive ? (
                         <span className="bg-emerald-900/60 text-emerald-400 text-xs px-2 py-0.5 rounded-full">
-                          Active
+                          Activa
                         </span>
                       ) : (
                         <span className="bg-red-900/60 text-red-400 text-xs px-2 py-0.5 rounded-full">
-                          Disabled
+                          Deshabilitada
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-2 text-xs text-slate-400 flex-wrap">
                       <span>
-                        Residents{" "}
+                        Residentes{" "}
                         <span className="text-slate-200 font-medium">
                           {c.counts.residents}/{c.maxResidents}
                         </span>
                       </span>
                       <span>
-                        Admins{" "}
+                        Administradores{" "}
                         <span className="text-slate-200 font-medium">
                           {c.counts.admins}
                         </span>
                       </span>
                       <span>
-                        Security{" "}
+                        Seguridad{" "}
                         <span className="text-slate-200 font-medium">
                           {c.counts.security}
                         </span>
@@ -303,13 +303,13 @@ export default function SuperAdminDashboard() {
                             onClick={() => saveLimit(c)}
                             className="text-sky-400 hover:text-sky-300 text-xs font-medium transition-colors"
                           >
-                            Save
+                            Guardar
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
                             className="text-slate-500 hover:text-slate-400 text-xs transition-colors"
                           >
-                            Cancel
+                            Cancelar
                           </button>
                         </div>
                       ) : (
@@ -320,7 +320,7 @@ export default function SuperAdminDashboard() {
                           }}
                           className="text-slate-500 hover:text-slate-300 text-xs transition-colors"
                         >
-                          Edit resident limit
+                          Editar límite de residentes
                         </button>
                       )}
                     </div>
@@ -335,10 +335,10 @@ export default function SuperAdminDashboard() {
                     }`}
                   >
                     {togglingId === c.id
-                      ? "Saving…"
+                      ? "Guardando…"
                       : c.isActive
-                        ? "Disable"
-                        : "Enable"}
+                        ? "Deshabilitar"
+                        : "Habilitar"}
                   </button>
                 </div>
               </div>

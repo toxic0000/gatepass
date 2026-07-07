@@ -15,7 +15,7 @@ function slugify(name: string): string {
 export async function GET(req: NextRequest) {
   const user = await requireRole(req, "SUPER_ADMIN");
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const communities = await db.community.findMany({
@@ -47,21 +47,21 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const user = await requireRole(req, "SUPER_ADMIN");
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const { name, maxResidents, adminUsername, adminPassword } = await req.json();
 
   if (!name?.trim() || !adminUsername?.trim() || !adminPassword) {
     return NextResponse.json(
-      { error: "Community name, admin username and admin password are required" },
+      { error: "Se requieren el nombre de la comunidad, el usuario y la contraseña del administrador" },
       { status: 400 }
     );
   }
   const limit = Number(maxResidents);
   if (!Number.isInteger(limit) || limit < 1) {
     return NextResponse.json(
-      { error: "Max residents must be a positive number" },
+      { error: "El máximo de residentes debe ser un número positivo" },
       { status: 400 }
     );
   }
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
       err.code === "P2002"
     ) {
       return NextResponse.json(
-        { error: "That admin username is already taken" },
+        { error: "Ese usuario de administrador ya está en uso" },
         { status: 409 }
       );
     }

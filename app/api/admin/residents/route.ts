@@ -5,7 +5,7 @@ import { requireRole } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   const user = await requireRole(req, "COMMUNITY_ADMIN");
   if (!user?.communityId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const residents = await db.resident.findMany({
@@ -38,14 +38,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const user = await requireRole(req, "COMMUNITY_ADMIN");
   if (!user?.communityId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const { name, unit, email } = await req.json();
 
   if (!name?.trim() || !unit?.trim()) {
     return NextResponse.json(
-      { error: "Name and unit are required" },
+      { error: "Se requieren nombre y unidad" },
       { status: 400 }
     );
   }
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
   if (activeCount >= limit) {
     return NextResponse.json(
       {
-        error: `Resident limit reached (${activeCount}/${limit}). Disable a resident or ask the program administrator to raise the limit.`,
+        error: `Límite de residentes alcanzado (${activeCount}/${limit}). Deshabilita un residente o pide al administrador del programa que aumente el límite.`,
       },
       { status: 403 }
     );

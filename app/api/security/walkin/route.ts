@@ -23,23 +23,23 @@ async function uniqueShortCode(): Promise<string> {
 export async function POST(req: NextRequest) {
   const user = await requireRole(req, "SECURITY");
   if (!user?.communityId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const body = await req.json();
   const { residentId, guestName, entryType, totalPersons, vehiclePlate, carBrand, carModel, carColor } = body;
 
   if (!residentId || !guestName || !entryType) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
   }
 
   const resident = await db.resident.findUnique({ where: { id: residentId } });
   if (!resident || resident.communityId !== user.communityId) {
-    return NextResponse.json({ error: "Resident not found" }, { status: 404 });
+    return NextResponse.json({ error: "Residente no encontrado" }, { status: 404 });
   }
   if (!resident.isActive) {
     return NextResponse.json(
-      { error: "This resident is currently disabled — walk-in passes are not allowed." },
+      { error: "Este residente está deshabilitado — no se permiten pases sin invitación." },
       { status: 403 }
     );
   }

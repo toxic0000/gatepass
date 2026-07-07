@@ -6,7 +6,7 @@ import { requireRole, hashPassword } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   const user = await requireRole(req, "COMMUNITY_ADMIN");
   if (!user?.communityId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const securityUsers = await db.user.findMany({
@@ -21,13 +21,13 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const user = await requireRole(req, "COMMUNITY_ADMIN");
   if (!user?.communityId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const { username, password } = await req.json();
   if (!username?.trim() || !password) {
     return NextResponse.json(
-      { error: "Username and password are required" },
+      { error: "Se requieren usuario y contraseña" },
       { status: 400 }
     );
   }
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       err.code === "P2002"
     ) {
       return NextResponse.json(
-        { error: "That username is already taken" },
+        { error: "Ese nombre de usuario ya está en uso" },
         { status: 409 }
       );
     }

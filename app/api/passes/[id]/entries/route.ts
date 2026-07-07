@@ -8,7 +8,7 @@ export async function POST(
 ) {
   const user = await requireRole(req, "SECURITY");
   if (!user?.communityId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -19,12 +19,12 @@ export async function POST(
     include: { resident: { select: { communityId: true } } },
   });
   if (!pass || pass.resident.communityId !== user.communityId) {
-    return NextResponse.json({ error: "Pass not found" }, { status: 404 });
+    return NextResponse.json({ error: "Pase no encontrado" }, { status: 404 });
   }
 
   const now = new Date();
   if (now < pass.validFrom || now > pass.validTo) {
-    return NextResponse.json({ error: "Pass is outside its valid window" }, { status: 403 });
+    return NextResponse.json({ error: "El pase está fuera de su periodo de validez" }, { status: 403 });
   }
 
   const entry = await db.entry.create({

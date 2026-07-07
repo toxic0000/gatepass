@@ -8,7 +8,7 @@ export async function DELETE(
 ) {
   const user = await requireRole(req, "COMMUNITY_ADMIN");
   if (!user?.communityId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -20,7 +20,7 @@ export async function DELETE(
     target.communityId !== user.communityId
   ) {
     return NextResponse.json(
-      { error: "Security user not found" },
+      { error: "Usuario de seguridad no encontrado" },
       { status: 404 }
     );
   }
