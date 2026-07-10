@@ -32,6 +32,14 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# .env.test only holds the local docker test-DB URL — no secrets, safe to commit
+!.env.test
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
 
 # SQLite database files
 *.db
@@ -47,3 +55,6 @@ yarn-error.log*
 next-env.d.ts
 
 /app/generated/prisma
+
+# session handoff doc (ephemeral, regenerated each session)
+docs/HANDOFF.md

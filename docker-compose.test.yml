@@ -1,0 +1,16 @@
+services:
+  test-db:
+    image: postgres:16-alpine
+    container_name: gatepass-test-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gatepass_test
+    # 5433 so it never collides with a locally installed Postgres on 5432
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
