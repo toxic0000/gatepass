@@ -1,7 +1,7 @@
 import QRCode from "qrcode";
 
 export function getPassUrl(passId: string, baseUrl = ""): string {
-  return `${baseUrl}/api/passes/${passId}`;
+  return `${baseUrl}/pass/${passId}`;
 }
 
 export async function generateQRDataURL(passId: string, baseUrl = ""): Promise<string> {

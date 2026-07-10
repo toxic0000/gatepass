@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { generateQRDataURL } from "@/lib/qr";
+import { generateQRDataURL, getPassUrl } from "@/lib/qr";
 
 type Entry = { id: string; enteredAt: string; note: string | null };
 type GuestPass = {
@@ -141,7 +141,7 @@ export default function ResidentPage() {
   }
 
   function sharePass(passId: string) {
-    const url = `${window.location.origin}/api/passes/${passId}`;
+    const url = getPassUrl(passId, window.location.origin);
     if (navigator.share) {
       navigator.share({ title: "Pase de invitado", url });
     } else {
