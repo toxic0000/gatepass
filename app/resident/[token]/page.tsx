@@ -21,13 +21,27 @@ type GuestPass = {
   createdAt: string;
   entries: Entry[];
 };
+type DeliveryVisit = {
+  id: string;
+  company: string;
+  note: string | null;
+  visitDate: string;
+  receivedAt: string | null;
+  createdAt: string;
+};
 type Resident = {
   id: string;
   name: string;
   unit: string;
   community: { name: string };
   guestPasses: GuestPass[];
+  deliveryVisits: DeliveryVisit[];
 };
+
+function todayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 const EMPTY_CAR_FORM = {
   entryType: "car" as const,
@@ -65,6 +79,8 @@ export default function ResidentPage() {
   const [qrMap, setQrMap] = useState<Record<string, string>>({});
   const [selectedPass, setSelectedPass] = useState<string | null>(null);
   const [canShareFiles, setCanShareFiles] = useState(false);
+  const [deliveryForm, setDeliveryForm] = useState({ company: "", note: "", visitDate: todayStr() });
+  const [submittingDelivery, setSubmittingDelivery] = useState(false);
 
   useEffect(() => {
     const probe = new File([new Uint8Array([1])], "probe.png", { type: "image/png" });
@@ -143,6 +159,43 @@ export default function ResidentPage() {
     setCarForm(EMPTY_CAR_FORM);
     setFootForm(EMPTY_FOOT_FORM);
     setFootNames([""]);
+    await loadResident();
+  }
+
+  async function handleDeliverySubmit(e: React.SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSubmittingDelivery(true);
+
+    const res = await fetch("/api/deliveries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ residentToken: token, ...deliveryForm }),
+    });
+
+    setSubmittingDelivery(false);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      if (res.status === 403) { await loadResident(); return; }
+      alert(err.error ?? "Error al programar la entrega");
+      return;
+    }
+
+    setDeliveryForm({ company: "", note: "", visitDate: todayStr() });
+    await loadResident();
+  }
+
+  async function cancelDelivery(deliveryId: string) {
+    if (!confirm("¿Cancelar esta entrega programada?")) return;
+    const res = await fetch(`/api/deliveries/${deliveryId}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ residentToken: token }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error ?? "Error al cancelar la entrega");
+      return;
+    }
     await loadResident();
   }
 
@@ -314,8 +367,9 @@ export default function ResidentPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Placas</label>
+                    <label className="block text-sm font-medium text-slate-600 mb-1">Placas *</label>
                     <input
+                      required
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
                       value={carForm.vehiclePlate}
                       onChange={e => setCarForm(f => ({ ...f, vehiclePlate: e.target.value }))}
@@ -376,6 +430,54 @@ export default function ResidentPage() {
               className="w-full bg-slate-800 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-slate-700 disabled:opacity-50 transition-colors"
             >
               {submitting ? "Creando…" : "Generar pase"}
+            </button>
+          </form>
+        </section>
+
+        {/* Schedule a delivery */}
+        <section className="bg-white rounded-2xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-slate-800 mb-1">Programar entrega</h2>
+          <p className="text-sm text-slate-500 mb-4">
+            Para paqueterías o repartidores de los que no tienes datos de contacto. No genera código QR — el
+            guardia la verá en su lista del día y la marcará como recibida cuando llegue.
+          </p>
+          <form onSubmit={handleDeliverySubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Empresa / repartidor *</label>
+              <input
+                required
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                value={deliveryForm.company}
+                onChange={e => setDeliveryForm(f => ({ ...f, company: e.target.value }))}
+                placeholder="Amazon, DHL, Rappi…"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Día de la entrega *</label>
+              <input
+                required
+                type="date"
+                min={todayStr()}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                value={deliveryForm.visitDate}
+                onChange={e => setDeliveryForm(f => ({ ...f, visitDate: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Nota (opcional)</label>
+              <input
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                value={deliveryForm.note}
+                onChange={e => setDeliveryForm(f => ({ ...f, note: e.target.value }))}
+                placeholder="p. ej. paquete grande, tocar el timbre"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={submittingDelivery}
+              className="w-full bg-slate-800 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-slate-700 disabled:opacity-50 transition-colors"
+            >
+              {submittingDelivery ? "Programando…" : "Programar entrega"}
             </button>
           </form>
         </section>
@@ -473,6 +575,53 @@ export default function ResidentPage() {
                       </p>
                     </div>
                   )}
+                </div>
+              );
+            })}
+          </section>
+        )}
+
+        {/* Scheduled deliveries */}
+        {resident.deliveryVisits.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="text-lg font-semibold text-slate-800">Tus entregas</h2>
+            {resident.deliveryVisits.map(delivery => {
+              const visitDay = new Date(delivery.visitDate);
+              const todayMidnight = new Date(`${todayStr()}T00:00:00.000Z`);
+              const received = !!delivery.receivedAt;
+              const overdue = !received && visitDay < todayMidnight;
+
+              return (
+                <div key={delivery.id} className="bg-white rounded-2xl shadow-sm p-5 flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-800">{delivery.company}</p>
+                    {delivery.note && <p className="text-sm text-slate-500 mt-0.5">{delivery.note}</p>}
+                    <p className="text-xs text-slate-400 mt-1">
+                      {visitDay.toLocaleDateString("es-MX", { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" })}
+                    </p>
+                    {received && (
+                      <p className="text-xs text-emerald-600 mt-1">
+                        Recibida el {new Date(delivery.receivedAt!).toLocaleString("es-MX")}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                      received ? "bg-emerald-100 text-emerald-700" :
+                      overdue ? "bg-red-100 text-red-600" :
+                      "bg-amber-100 text-amber-700"
+                    }`}>
+                      {received ? "Recibida" : overdue ? "Atrasada" : "Pendiente"}
+                    </span>
+                    {!received && (
+                      <button
+                        onClick={() => cancelDelivery(delivery.id)}
+                        className="text-xs text-slate-500 underline"
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}

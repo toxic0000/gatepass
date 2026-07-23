@@ -36,6 +36,19 @@ type RecentEntry = {
   };
 };
 
+type DeliveryVisit = {
+  id: string;
+  company: string;
+  note: string | null;
+  visitDate: string;
+  resident: { name: string; unit: string };
+};
+
+function todayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 type PassStatus = "valid" | "expired" | "upcoming" | "not_found";
 type ActionState = "idle" | "denying" | "allowed" | "denied";
 
@@ -61,6 +74,8 @@ export default function SecurityPage() {
   const [denialReason, setDenialReason] = useState("");
   const [allowedAt, setAllowedAt] = useState<string | null>(null);
   const [recentEntries, setRecentEntries] = useState<RecentEntry[]>([]);
+  const [deliveries, setDeliveries] = useState<DeliveryVisit[]>([]);
+  const [receivingDelivery, setReceivingDelivery] = useState<string | null>(null);
 
   const loadRecentEntries = useCallback(async () => {
     const res = await fetch("/api/security/entries");
@@ -71,7 +86,13 @@ export default function SecurityPage() {
     if (res.ok) setRecentEntries(await res.json());
   }, [router]);
 
+  const loadDeliveries = useCallback(async () => {
+    const res = await fetch(`/api/security/deliveries?date=${todayStr()}`);
+    if (res.ok) setDeliveries(await res.json());
+  }, []);
+
   useEffect(() => { loadRecentEntries(); }, [loadRecentEntries]);
+  useEffect(() => { loadDeliveries(); }, [loadDeliveries]);
   useEffect(() => () => { controlsRef.current?.stop(); }, []);
 
   function resetResult() {
@@ -154,6 +175,18 @@ export default function SecurityPage() {
     setAllowedAt(new Date().toLocaleString("es-MX"));
     setActionState("allowed");
     await loadRecentEntries();
+  }
+
+  async function markDeliveryReceived(deliveryId: string) {
+    setReceivingDelivery(deliveryId);
+    const res = await fetch(`/api/security/deliveries/${deliveryId}/receive`, { method: "POST" });
+    setReceivingDelivery(null);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error ?? "Error al marcar la entrega como recibida");
+      return;
+    }
+    await loadDeliveries();
   }
 
   function confirmDenial() {
@@ -396,6 +429,47 @@ export default function SecurityPage() {
             ¿El invitado no tiene invitación?
             <span className="block text-xs font-normal text-slate-400 mt-0.5">Registrar una visita sin invitación</span>
           </button>
+        </section>
+
+        {/* Deliveries for today */}
+        <section>
+          <h2 className="text-slate-400 text-xs uppercase tracking-widest mb-3 px-1">📦 Entregas de hoy</h2>
+          {deliveries.length === 0 ? (
+            <div className="bg-slate-800 rounded-2xl p-6 text-center text-slate-500 text-sm">
+              No hay entregas programadas
+            </div>
+          ) : (
+            <div className="bg-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-700">
+              {deliveries.map(delivery => {
+                const overdue = delivery.visitDate.slice(0, 10) < todayStr();
+                return (
+                  <div key={delivery.id} className="px-4 py-3 flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-sm font-medium truncate">
+                        {delivery.company}
+                        {overdue && (
+                          <span className="ml-2 text-xs font-semibold text-red-400 uppercase tracking-wide">
+                            Atrasada
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-slate-400 text-xs truncate">
+                        Unidad {delivery.resident.unit} — {delivery.resident.name}
+                        {delivery.note && ` · ${delivery.note}`}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => markDeliveryReceived(delivery.id)}
+                      disabled={receivingDelivery === delivery.id}
+                      className="shrink-0 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+                    >
+                      {receivingDelivery === delivery.id ? "…" : "Marcar recibida"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         {/* Recent entries */}

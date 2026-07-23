@@ -25,27 +25,29 @@ model Community {
 }
 
 model User {
-  id           String     @id @default(cuid())
-  username     String     @unique
-  passwordHash String
-  role         Role
-  communityId  String?
-  community    Community? @relation(fields: [communityId], references: [id])
-  createdAt    DateTime   @default(now())
+  id                 String          @id @default(cuid())
+  username           String          @unique
+  passwordHash       String
+  role               Role
+  communityId        String?
+  community          Community?      @relation(fields: [communityId], references: [id])
+  deliveriesReceived DeliveryVisit[]
+  createdAt          DateTime        @default(now())
 }
 
 model Resident {
-  id           String      @id @default(cuid())
-  name         String
-  unit         String
-  email        String?
-  isActive     Boolean     @default(true)
-  disabledNote String?
-  token        String      @unique @default(cuid())
-  communityId  String
-  community    Community   @relation(fields: [communityId], references: [id])
-  guestPasses  GuestPass[]
-  createdAt    DateTime    @default(now())
+  id             String          @id @default(cuid())
+  name           String
+  unit           String
+  email          String?
+  isActive       Boolean         @default(true)
+  disabledNote   String?
+  token          String          @unique @default(cuid())
+  communityId    String
+  community      Community       @relation(fields: [communityId], references: [id])
+  guestPasses    GuestPass[]
+  deliveryVisits DeliveryVisit[]
+  createdAt      DateTime        @default(now())
 }
 
 model GuestPass {
@@ -73,4 +75,21 @@ model Entry {
   guestPass   GuestPass @relation(fields: [guestPassId], references: [id], onDelete: Cascade)
   enteredAt   DateTime  @default(now())
   note        String?
+}
+
+// A delivery/courier visit a resident schedules ahead of time. No QR/short code —
+// the guard checks the visitor's claimed unit/name against this list instead of
+// scanning anything. Valid for the whole visitDate; disappears from the guard's
+// view once receivedAt is set (soft — row stays for history, just filtered out).
+model DeliveryVisit {
+  id               String    @id @default(cuid())
+  residentId       String
+  resident         Resident  @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  company          String
+  note             String?
+  visitDate        DateTime  @db.Date
+  receivedAt       DateTime?
+  receivedByUserId String?
+  receivedByUser   User?     @relation(fields: [receivedByUserId], references: [id])
+  createdAt        DateTime  @default(now())
 }
