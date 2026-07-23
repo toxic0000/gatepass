@@ -64,6 +64,12 @@ export default function ResidentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [qrMap, setQrMap] = useState<Record<string, string>>({});
   const [selectedPass, setSelectedPass] = useState<string | null>(null);
+  const [canShareFiles, setCanShareFiles] = useState(false);
+
+  useEffect(() => {
+    const probe = new File([new Uint8Array([1])], "probe.png", { type: "image/png" });
+    setCanShareFiles(!!navigator.canShare?.({ files: [probe] }));
+  }, []);
 
   const loadResident = useCallback(async () => {
     const res = await fetch(`/api/residents/${token}`);
@@ -147,6 +153,22 @@ export default function ResidentPage() {
     } else {
       navigator.clipboard.writeText(url);
       alert("¡Enlace del pase copiado al portapapeles!");
+    }
+  }
+
+  async function shareQRImage(pass: GuestPass) {
+    const dataUrl = qrMap[pass.id];
+    if (!dataUrl) return;
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], `pase-${pass.shortCode}.png`, { type: "image/png" });
+    try {
+      await navigator.share({
+        files: [file],
+        title: "Pase de invitado",
+        text: `Pase de invitado para ${pass.guestName} — código ${pass.shortCode}`,
+      });
+    } catch (err) {
+      if ((err as Error)?.name !== "AbortError") throw err;
     }
   }
 
@@ -431,6 +453,14 @@ export default function ResidentPage() {
                     >
                       Compartir enlace
                     </button>
+                    {canShareFiles && qrMap[pass.id] && (
+                      <button
+                        onClick={() => shareQRImage(pass)}
+                        className="text-sm text-emerald-600 underline"
+                      >
+                        Compartir QR por WhatsApp
+                      </button>
+                    )}
                   </div>
 
                   {selectedPass === pass.id && qrMap[pass.id] && (
