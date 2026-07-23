@@ -12,6 +12,11 @@ export async function POST(
   }
 
   const { id } = await params;
+  const { receivedByName } = await req.json().catch(() => ({}));
+  if (!receivedByName?.trim()) {
+    return NextResponse.json({ error: "Falta el nombre de quien recibe" }, { status: 400 });
+  }
+
   const delivery = await db.deliveryVisit.findUnique({
     where: { id },
     include: { resident: true },
@@ -25,7 +30,7 @@ export async function POST(
 
   const updated = await db.deliveryVisit.update({
     where: { id },
-    data: { receivedAt: new Date(), receivedByUserId: user.id },
+    data: { receivedAt: new Date(), receivedByName: receivedByName.trim(), receivedByUserId: user.id },
   });
 
   return NextResponse.json(updated);

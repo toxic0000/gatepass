@@ -89,6 +89,7 @@ model DeliveryVisit {
   note             String?
   visitDate        DateTime  @db.Date
   receivedAt       DateTime?
+  receivedByName   String?
   receivedByUserId String?
   receivedByUser   User?     @relation(fields: [receivedByUserId], references: [id])
   createdAt        DateTime  @default(now())

@@ -27,6 +27,7 @@ type DeliveryVisit = {
   note: string | null;
   visitDate: string;
   receivedAt: string | null;
+  receivedByName: string | null;
   createdAt: string;
 };
 type Resident = {
@@ -601,7 +602,7 @@ export default function ResidentPage() {
                     </p>
                     {received && (
                       <p className="text-xs text-emerald-600 mt-1">
-                        Recibida el {new Date(delivery.receivedAt!).toLocaleString("es-MX")}
+                        Recibida por {delivery.receivedByName} el {new Date(delivery.receivedAt!).toLocaleString("es-MX")}
                       </p>
                     )}
                   </div>

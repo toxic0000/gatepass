@@ -76,6 +76,8 @@ export default function SecurityPage() {
   const [recentEntries, setRecentEntries] = useState<RecentEntry[]>([]);
   const [deliveries, setDeliveries] = useState<DeliveryVisit[]>([]);
   const [receivingDelivery, setReceivingDelivery] = useState<string | null>(null);
+  const [expandedDeliveryId, setExpandedDeliveryId] = useState<string | null>(null);
+  const [receivedByName, setReceivedByName] = useState("");
 
   const loadRecentEntries = useCallback(async () => {
     const res = await fetch("/api/security/entries");
@@ -178,14 +180,21 @@ export default function SecurityPage() {
   }
 
   async function markDeliveryReceived(deliveryId: string) {
+    if (!receivedByName.trim()) return;
     setReceivingDelivery(deliveryId);
-    const res = await fetch(`/api/security/deliveries/${deliveryId}/receive`, { method: "POST" });
+    const res = await fetch(`/api/security/deliveries/${deliveryId}/receive`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ receivedByName }),
+    });
     setReceivingDelivery(null);
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       alert(err.error ?? "Error al marcar la entrega como recibida");
       return;
     }
+    setExpandedDeliveryId(null);
+    setReceivedByName("");
     await loadDeliveries();
   }
 
@@ -442,29 +451,63 @@ export default function SecurityPage() {
             <div className="bg-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-700">
               {deliveries.map(delivery => {
                 const overdue = delivery.visitDate.slice(0, 10) < todayStr();
+                const expanded = expandedDeliveryId === delivery.id;
                 return (
-                  <div key={delivery.id} className="px-4 py-3 flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">
-                        {delivery.company}
-                        {overdue && (
-                          <span className="ml-2 text-xs font-semibold text-red-400 uppercase tracking-wide">
-                            Atrasada
-                          </span>
+                  <div key={delivery.id} className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-medium truncate">
+                          {delivery.company}
+                          {overdue && (
+                            <span className="ml-2 text-xs font-semibold text-red-400 uppercase tracking-wide">
+                              Atrasada
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-slate-400 text-xs truncate">
+                          Unidad {delivery.resident.unit} — {delivery.resident.name}
+                        </p>
+                        {delivery.note && (
+                          <p className="text-slate-400 text-xs mt-0.5 whitespace-pre-wrap break-words">
+                            {delivery.note}
+                          </p>
                         )}
-                      </p>
-                      <p className="text-slate-400 text-xs truncate">
-                        Unidad {delivery.resident.unit} — {delivery.resident.name}
-                        {delivery.note && ` · ${delivery.note}`}
-                      </p>
+                      </div>
+                      {!expanded && (
+                        <button
+                          onClick={() => { setExpandedDeliveryId(delivery.id); setReceivedByName(""); }}
+                          className="shrink-0 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+                        >
+                          Marcar recibida
+                        </button>
+                      )}
                     </div>
-                    <button
-                      onClick={() => markDeliveryReceived(delivery.id)}
-                      disabled={receivingDelivery === delivery.id}
-                      className="shrink-0 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
-                    >
-                      {receivingDelivery === delivery.id ? "…" : "Marcar recibida"}
-                    </button>
+
+                    {expanded && (
+                      <div className="mt-3 flex gap-2">
+                        <input
+                          autoFocus
+                          className="flex-1 min-w-0 bg-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-500"
+                          placeholder="Nombre de quien recibe"
+                          value={receivedByName}
+                          onChange={e => setReceivedByName(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && markDeliveryReceived(delivery.id)}
+                        />
+                        <button
+                          onClick={() => markDeliveryReceived(delivery.id)}
+                          disabled={!receivedByName.trim() || receivingDelivery === delivery.id}
+                          className="shrink-0 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+                        >
+                          {receivingDelivery === delivery.id ? "…" : "Confirmar"}
+                        </button>
+                        <button
+                          onClick={() => { setExpandedDeliveryId(null); setReceivedByName(""); }}
+                          className="shrink-0 bg-slate-600 hover:bg-slate-500 text-white rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
